@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic数字团队-数据库管理员</title>
+    <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: #0f172a; color: #e2e8f0; line-height: 1.7;
+}
+.sidebar {
+    position: fixed; left: 0; top: 0; width: 280px; height: 100vh;
+    background: #1e293b; border-right: 1px solid #334155;
+    overflow-y: auto; z-index: 100; padding: 20px 0;
+    transition: transform 0.3s ease;
+}
+.sidebar-header { padding: 10px 20px 20px; border-bottom: 1px solid #334155; margin-bottom: 10px; }
+.sidebar-header h2 { font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+.sidebar a {
+    display: block; padding: 10px 20px; color: #94a3b8; text-decoration: none;
+    font-size: 13px; transition: all 0.2s; border-left: 3px solid transparent;
+}
+.sidebar a:hover { background: #334155; color: #e2e8f0; }
+.sidebar a.active { background: rgba(99,102,241,0.1); color: #818cf8; border-left-color: #818cf8; }
+.sidebar a.chapter { font-weight: 600; color: #cbd5e1; margin-top: 8px; font-size: 14px; }
+.sidebar a.section { padding-left: 36px; font-size: 13px; }
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 2px; }
+.sidebar-toggle {
+    position: fixed; left: 280px; top: 20px; width: 28px; height: 28px;
+    background: #1e293b; border: 1px solid #334155; border-radius: 0 6px 6px 0;
+    color: #94a3b8; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; z-index: 101; transition: all 0.3s; font-size: 12px;
+}
+.sidebar-toggle:hover { background: #334155; color: #e2e8f0; }
+.sidebar.hidden { transform: translateX(-100%); }
+.sidebar.hidden + .sidebar-toggle { left: 0; }
+.sidebar.hidden ~ .main-content { margin-left: 0; }
+.main-content { margin-left: 280px; padding: 40px 60px; max-width: 1000px; transition: margin-left 0.3s ease; }
+.slide { min-height: 80vh; padding: 60px 0; border-bottom: 1px solid #1e293b; scroll-margin-top: 20px; }
+.slide:last-child { border-bottom: none; }
+.cover { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+.cover h1 { font-size: 48px; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; }
+.cover .subtitle { font-size: 20px; color: #94a3b8; margin-bottom: 30px; }
+.cover .meta { color: #64748b; font-size: 14px; }
+.cover-tags { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+.cover-tag { padding: 6px 16px; border-radius: 20px; font-size: 13px; background: rgba(129,140,248,0.15); color: #818cf8; border: 1px solid rgba(129,140,248,0.3); }
+.chapter-title { font-size: 36px; color: #818cf8; margin-bottom: 10px; }
+.chapter-subtitle { font-size: 18px; color: #64748b; margin-bottom: 40px; }
+h3 { font-size: 28px; color: #f1f5f9; margin-bottom: 30px; }
+h4 { font-size: 20px; color: #cbd5e1; margin: 30px 0 15px; }
+h5 { font-size: 16px; color: #cbd5e1; margin: 0 0 8px; }
+p { margin-bottom: 16px; color: #cbd5e1; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin: 20px 0; }
+.card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; transition: all 0.3s; }
+.card:hover { border-color: #818cf8; transform: translateY(-2px); }
+.card-icon { font-size: 28px; margin-bottom: 12px; }
+.card-title { font-size: 16px; font-weight: 600; color: #818cf8; margin-bottom: 10px; }
+.card p { font-size: 14px; color: #94a3b8; margin-bottom: 0; }
+.feature-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 20px 0; }
+.feature-item { background: #1e293b; border-radius: 10px; padding: 20px; border-left: 3px solid #818cf8; }
+.feature-item strong { color: #f1f5f9; display: block; margin-bottom: 8px; }
+.feature-item p { font-size: 14px; color: #94a3b8; margin: 0; }
+.flow-steps { display: flex; flex-direction: column; gap: 16px; margin: 20px 0; }
+.flow-step { display: flex; align-items: flex-start; gap: 16px; background: #1e293b; border-radius: 10px; padding: 20px; }
+.step-num { background: #818cf8; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+.role-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+.role-card { background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 12px; padding: 24px; border: 1px solid #334155; text-align: center; transition: all 0.3s; }
+.role-card:hover { border-color: #818cf8; transform: translateY(-2px); }
+.role-icon { font-size: 32px; margin-bottom: 12px; }
+.role-card h5 { color: #818cf8; }
+.role-card p { font-size: 13px; color: #94a3b8; margin: 0; }
+.compare-table { background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; margin: 20px 0; }
+.table-header { background: #0f172a; }
+.table-row { display: flex; border-top: 1px solid #334155; transition: background 0.2s; }
+.table-row:first-child { border-top: none; }
+.table-row:not(.table-header .table-row):hover { background: rgba(129,140,248,0.05); }
+.table-header .table-row { border-top: none; }
+.table-cell { flex: 1; padding: 14px 16px; font-size: 13px; color: #cbd5e1; }
+.table-header .table-cell { color: #818cf8; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+.table-row .table-cell:first-child { color: #f1f5f9; font-weight: 500; }
+.table-caption { font-size: 12px; color: #64748b; margin-top: 8px; text-align: center; }
+.bar-chart { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+.bar-row { display: flex; align-items: center; gap: 12px; }
+.bar-label { width: 120px; font-size: 13px; color: #94a3b8; text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; background: #1e293b; border-radius: 6px; height: 28px; position: relative; overflow: visible; display: flex; align-items: center; }
+.bar-fill { height: 100%; border-radius: 6px; transition: width 1s ease; min-width: 4px; }
+.bar-value { position: absolute; right: -48px; font-size: 13px; color: #94a3b8; white-space: nowrap; }
+.chart-container { margin: 20px 0; text-align: center; }
+.chart-title { font-size: 16px; color: #f1f5f9; margin-bottom: 12px; }
+.compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin: 20px 0; }
+.compare-card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; transition: all 0.3s; }
+.compare-card:hover { border-color: #818cf8; transform: translateY(-4px); }
+.compare-card.featured { border-color: #818cf8; background: linear-gradient(135deg, rgba(129,140,248,0.1), rgba(168,139,250,0.05)); }
+.compare-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.compare-icon { font-size: 24px; }
+.compare-header h5 { font-size: 18px; color: #f1f5f9; margin: 0; }
+.compare-desc p { font-size: 14px; color: #94a3b8; margin: 0 0 12px; }
+.compare-features { display: flex; flex-wrap: wrap; gap: 6px; }
+.feature-tag { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: rgba(74,222,128,0.15); color: #4ade80; }
+.code-wrapper { margin: 20px 0; }
+.code-caption { font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+.code-block { background: #0f172a; border-radius: 10px; padding: 20px; overflow-x: auto; border: 1px solid #334155; }
+.code-block code { font-family: 'Fira Code','Courier New', monospace; font-size: 13px; color: #e2e8f0; line-height: 1.8; white-space: pre; }
+.highlight-box { border-radius: 10px; padding: 16px 20px; margin: 16px 0; border: 1px solid; }
+.highlight-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.highlight-header strong { font-size: 14px; }
+.highlight-box p { font-size: 14px; margin: 0; }
+.highlight-indigo { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); }
+.highlight-indigo .highlight-header strong { color: #818cf8; }
+.highlight-green { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); }
+.highlight-green .highlight-header strong { color: #4ade80; }
+.highlight-amber { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); }
+.highlight-amber .highlight-header strong { color: #fbbf24; }
+.highlight-red { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); }
+.highlight-red .highlight-header strong { color: #f87171; }
+.image-placeholder { display: flex; gap: 16px; align-items: flex-start; background: #1e293b; border: 1px dashed #334155; border-radius: 12px; padding: 20px; margin: 20px 0; }
+.image-placeholder-icon { font-size: 32px; flex-shrink: 0; opacity: 0.5; }
+.image-placeholder-label { font-size: 12px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.image-placeholder-prompt { font-size: 13px; color: #94a3b8; font-style: italic; margin-bottom: 6px; }
+.image-placeholder-hint { font-size: 12px; color: #4ade80; opacity: 0.7; }
+.think-box { background: #1e293b; border-radius: 12px; padding: 24px; margin: 30px 0; border: 1px solid #334155; border-left: 4px solid #818cf8; }
+.think-title { display: inline-block; background: linear-gradient(135deg, #818cf8, #a78bfa); color: white; padding: 4px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.think-question { font-size: 16px; color: #f1f5f9; margin-bottom: 16px; font-weight: 500; }
+.think-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.option { background: rgba(99,102,241,0.1); padding: 12px 16px; border-radius: 8px; font-size: 14px; color: #cbd5e1; border: 1px solid rgba(99,102,241,0.2); cursor: pointer; transition: all 0.2s; user-select: none; }
+.option:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); }
+.option.selected { background: rgba(99,102,241,0.3); border-color: #818cf8; color: #f1f5f9; }
+.option.correct { background: rgba(74,222,128,0.2); border-color: #4ade80; color: #f1f5f9; }
+.option.wrong { background: rgba(239,68,68,0.15); border-color: #f87171; }
+.answer-toggle { background: linear-gradient(135deg, #818cf8, #a78bfa); color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s; margin-top: 4px; }
+.answer-toggle:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(129,140,248,0.4); }
+.answer-content { display: none; margin-top: 20px; padding: 20px; background: rgba(74,222,128,0.1); border-radius: 8px; border: 1px solid rgba(74,222,128,0.2); }
+.answer-content.show { display: block; }
+.answer-content p { font-size: 14px; color: #cbd5e1; margin-bottom: 8px; }
+.answer-content p:last-child { margin-bottom: 0; }
+.answer-content strong { color: #4ade80; }
+.answer-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tag-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.tag { padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; user-select: none; }
+.tag:hover { transform: translateY(-2px); }
+.tag.selected::before { content: "✓ "; }
+.tag-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border-color: rgba(59,130,246,0.3); }
+.tag-blue.selected { background: #3b82f6; color: white; border-color: #3b82f6; }
+.tag-purple { background: rgba(168,85,247,0.15); color: #c084fc; border-color: rgba(168,85,247,0.3); }
+.tag-purple.selected { background: #a855f7; color: white; border-color: #a855f7; }
+.tag-green { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
+.tag-green.selected { background: #22c55e; color: white; border-color: #22c55e; }
+.tag-amber { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+.tag-amber.selected { background: #f59e0b; color: white; border-color: #f59e0b; }
+.tag-cyan { background: rgba(6,182,212,0.15); color: #22d3ee; border-color: rgba(6,182,212,0.3); }
+.tag-cyan.selected { background: #06b6d4; color: white; border-color: #06b6d4; }
+.tag-pink { background: rgba(236,72,153,0.15); color: #f472b6; border-color: rgba(236,72,153,0.3); }
+.tag-pink.selected { background: #ec4899; color: white; border-color: #ec4899; }
+.tag-teal { background: rgba(20,184,166,0.15); color: #2dd4bf; border-color: rgba(20,184,166,0.3); }
+.tag-teal.selected { background: #14b8a6; color: white; border-color: #14b8a6; }
+.tag-orange { background: rgba(249,115,22,0.15); color: #fb923c; border-color: rgba(249,115,22,0.3); }
+.tag-orange.selected { background: #f97316; color: white; border-color: #f97316; }
+.practice-section { margin-top: 30px; }
+.practice-label { display: inline-block; background: linear-gradient(135deg, #4ade80, #22d3ee); color: #0f172a; padding: 6px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.resource-list { display: flex; flex-direction: column; gap: 12px; }
+.resource-item { display: flex; align-items: center; gap: 16px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 20px; text-decoration: none; transition: all 0.3s; cursor: pointer; }
+.resource-item:hover { border-color: #4ade80; background: rgba(74,222,128,0.05); transform: translateX(4px); }
+.resource-icon { font-size: 24px; flex-shrink: 0; }
+.resource-info { flex: 1; }
+.resource-name { font-size: 14px; font-weight: 600; color: #f1f5f9; margin-bottom: 4px; font-family: 'Courier New', monospace; }
+.resource-desc { font-size: 13px; color: #94a3b8; }
+.resource-arrow { color: #4ade80; font-size: 18px; flex-shrink: 0; opacity: 0; transition: all 0.3s; }
+.resource-item:hover .resource-arrow { opacity: 1; transform: translateX(4px); }
+.practice-steps { display: flex; flex-direction: column; gap: 16px; }
+.practice-step { display: flex; gap: 16px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+.practice-step-num { background: linear-gradient(135deg, #4ade80, #22d3ee); color: #0f172a; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; flex-shrink: 0; height: fit-content; }
+.practice-step-title { font-size: 16px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }
+.practice-step-desc { font-size: 14px; color: #94a3b8; line-height: 1.6; }
+.homework-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
+.homework-card { background: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; transition: all 0.3s; }
+.homework-card:hover { border-color: #818cf8; transform: translateY(-4px); }
+.homework-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.homework-num { background: linear-gradient(135deg, #818cf8, #a78bfa); color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+.homework-difficulty { display: flex; gap: 4px; }
+.diff-star { color: #fbbf24; font-size: 16px; }
+.diff-empty { color: #334155; font-size: 16px; }
+.homework-title { font-size: 20px; color: #f1f5f9; margin-bottom: 12px; }
+.homework-desc p { font-size: 14px; color: #94a3b8; margin: 0 0 16px; }
+.homework-requirements { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.req-title { font-size: 13px; font-weight: 600; color: #818cf8; margin-bottom: 12px; }
+.req-item { display: flex; gap: 10px; font-size: 13px; color: #cbd5e1; margin-bottom: 8px; }
+.output-label { background: rgba(74,222,128,0.15); color: #4ade80; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; margin-right: 8px; }
+.output-text { font-size: 13px; color: #94a3b8; }
+.ability-section { margin-bottom: 30px; }
+.section-label { display: inline-block; background: linear-gradient(135deg, #818cf8, #a78bfa); color: white; padding: 6px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.ability-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.ability-card { display: flex; gap: 16px; background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; transition: all 0.3s; }
+.ability-card:hover { border-color: #818cf8; transform: translateY(-2px); }
+.ability-icon { font-size: 32px; flex-shrink: 0; }
+.ability-name { font-size: 16px; font-weight: 600; color: #f1f5f9; margin-bottom: 6px; }
+.ability-desc { font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
+.ability-bar { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
+.ability-fill { height: 100%; background: linear-gradient(90deg, #818cf8, #a78bfa); border-radius: 3px; transition: width 1s ease; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin: 24px 0; }
+.summary-card { background: linear-gradient(135deg, rgba(129,140,248,0.1), rgba(168,139,250,0.05)); border: 1px solid rgba(129,140,248,0.2); border-radius: 12px; padding: 20px; text-align: center; }
+.summary-icon { font-size: 36px; margin-bottom: 12px; }
+.summary-label { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+.summary-value { font-size: 22px; font-weight: 700; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.summary-key-points { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+.summary-point { display: flex; align-items: flex-start; gap: 12px; background: #1e293b; border-radius: 8px; padding: 14px 16px; }
+.summary-point-icon { font-size: 18px; flex-shrink: 0; }
+.summary-point-text { font-size: 14px; color: #cbd5e1; }
+.ending { text-align: center; padding: 80px 0; }
+.ending h2 { font-size: 40px; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+.ending p { color: #64748b; }
+ul { list-style: none; padding: 0; }
+ul li { padding: 8px 0 8px 20px; position: relative; color: #cbd5e1; }
+ul li::before { content: "•"; color: #818cf8; position: absolute; left: 0; }
+.theme-toggle { position: fixed; right: 20px; top: 20px; width: 40px; height: 40px; background: #1e293b; border: 1px solid #334155; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 101; font-size: 18px; transition: all 0.3s; }
+.theme-toggle:hover { transform: scale(1.1); }
+body.light { background: #f8fafc; color: #1e293b; }
+body.light .sidebar { background: #fff; border-right-color: #e2e8f0; }
+body.light .sidebar-header h2 { color: #64748b; }
+body.light .sidebar a { color: #64748b; }
+body.light .sidebar a:hover { background: #f1f5f9; color: #1e293b; }
+body.light .sidebar a.active { background: rgba(99,102,241,0.1); color: #6366f1; border-left-color: #6366f1; }
+body.light .sidebar a.chapter { color: #334155; }
+body.light .sidebar-toggle { background: #fff; border-color: #e2e8f0; color: #64748b; }
+body.light .sidebar-toggle:hover { background: #f1f5f9; }
+body.light .theme-toggle { background: #fff; border-color: #e2e8f0; }
+body.light .cover h1 { background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+body.light .chapter-title { color: #6366f1; }
+body.light h3 { color: #0f172a; }
+body.light h4 { color: #334155; }
+body.light p { color: #475569; }
+body.light .card { background: #fff; border-color: #e2e8f0; }
+body.light .card-title { color: #6366f1; }
+body.light .card p { color: #64748b; }
+body.light .feature-item { background: #fff; border-left-color: #6366f1; }
+body.light .feature-item strong { color: #0f172a; }
+body.light .flow-step { background: #fff; }
+body.light .role-card { background: linear-gradient(135deg, #fff, #f8fafc); border-color: #e2e8f0; }
+body.light .role-card h5 { color: #6366f1; }
+body.light .compare-card { background: #fff; border-color: #e2e8f0; }
+body.light .compare-card.featured { border-color: #6366f1; }
+body.light .compare-header h5 { color: #0f172a; }
+body.light .compare-desc p { color: #64748b; }
+body.light .compare-table { background: #fff; border-color: #e2e8f0; }
+body.light .table-header { background: #f8fafc; }
+body.light .table-header .table-cell { color: #6366f1; }
+body.light .table-row { border-top-color: #e2e8f0; }
+body.light .table-cell { color: #475569; }
+body.light .table-row .table-cell:first-child { color: #0f172a; }
+body.light .code-block { background: #f8fafc; border-color: #e2e8f0; }
+body.light .code-block code { color: #334155; }
+body.light .think-box { background: #fff; border-color: #e2e8f0; border-left-color: #6366f1; }
+body.light .option { background: rgba(99,102,241,0.06); border-color: rgba(99,102,241,0.15); color: #475569; }
+body.light .option:hover { background: rgba(99,102,241,0.12); }
+body.light .option.selected { background: rgba(99,102,241,0.15); border-color: #6366f1; color: #0f172a; }
+body.light .resource-item { background: #fff; border-color: #e2e8f0; }
+body.light .resource-item:hover { border-color: #22c55e; }
+body.light .resource-name { color: #0f172a; }
+body.light .resource-desc { color: #64748b; }
+body.light .practice-step { background: #fff; border-color: #e2e8f0; }
+body.light .practice-step-title { color: #0f172a; }
+body.light .practice-step-desc { color: #64748b; }
+body.light .homework-card { background: #fff; border-color: #e2e8f0; }
+body.light .homework-card:hover { border-color: #6366f1; }
+body.light .homework-title { color: #0f172a; }
+body.light .homework-requirements { background: #f8fafc; }
+body.light .req-title { color: #6366f1; }
+body.light .req-item { color: #475569; }
+body.light .ability-card { background: #fff; border-color: #e2e8f0; }
+body.light .ability-name { color: #0f172a; }
+body.light .ability-bar { background: #e2e8f0; }
+body.light .summary-card { background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.03)); border-color: rgba(99,102,241,0.15); }
+body.light .summary-point { background: #fff; }
+body.light .image-placeholder { background: #fff; border-color: #e2e8f0; }
+body.light ul li { color: #475569; }
+body.light ul li::before { color: #6366f1; }
+@media (max-width: 900px) {
+    .sidebar { display: none; }
+    .sidebar-toggle { display: none; }
+    .main-content { margin-left: 0; padding: 20px; }
+    .homework-grid { grid-template-columns: 1fr; }
+    .ability-grid { grid-template-columns: 1fr; }
+}
+
+    /* 音频播放按钮 */
+    .audio-player {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #818cf8, #a78bfa);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: all 0.3s;
+    }
+    
+    .audio-player:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+    
+    .audio-player svg {
+        width: 24px;
+        height: 24px;
+        fill: white;
+    }
+    
+    .audio-player.playing {
+        background: linear-gradient(135deg, #ef4444, #f87171);
+    }
+    
+    .audio-player:disabled {
+        background: #64748b;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+</style>
+</head>
+<body>
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-header"><h2>Agentic数字团队-数据库管理员</h2></div>
+<a href="#cover" class="chapter">🏠 课程封面</a>
+<a href="#DBA角色与职责边界" class="chapter">第1章 DBA角色与职责边界</a>
+<a href="#DBA角色与职责边界" class="section">· DBA角色与职责边界</a>
+<a href="#数据库创建与基础数据初始化" class="chapter">第2章 数据库创建与基础数据初始化</a>
+<a href="#数据库创建与基础数据初始化" class="section">· 数据库创建与基础数据初始化</a>
+<a href="#测试数据管理" class="chapter">第3章 测试数据管理</a>
+<a href="#测试数据管理" class="section">· 测试数据管理</a>
+<a href="#数据备份与恢复" class="chapter">第4章 数据备份与恢复</a>
+<a href="#数据备份与恢复" class="section">· 数据备份与恢复</a>
+<a href="#数据库结构变更管理" class="chapter">第5章 数据库结构变更管理</a>
+<a href="#数据库结构变更管理" class="section">· 数据库结构变更管理</a>
+<a href="#日常监控与巡检" class="chapter">第6章 日常监控与巡检</a>
+<a href="#日常监控与巡检" class="section">· 日常监控与巡检</a>
+<a href="#practice" class="chapter">🛠️ 实践章节</a>
+<a href="#summary" class="chapter">📋 课程总结</a>
+<a href="#homework" class="chapter">📝 课程作业</a>
+</nav>
+<button class="sidebar-toggle" onclick="toggleSidebar()">◀</button>
+<button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+<main class="main-content">
+<section class="slide cover" id="cover">
+    <h1>Agentic数字团队-数据库管理员</h1>
+    <p class="subtitle">AI驱动的数据库管理、维护与自动化运维</p>
+    <p class="meta">👤 CodeBuddy团队 &nbsp;·&nbsp; ⏱ 2学时</p>
+    <div class="cover-tags"><span class="cover-tag">Agentic</span><span class="cover-tag">DBA</span><span class="cover-tag">数据库管理</span><span class="cover-tag">备份恢复</span><span class="cover-tag">Schema变更</span><span class="cover-tag">数据运维</span></div>
+</section>
+<section class="slide" id="DBA角色与职责边界">
+    <div class="chapter-title">第1章 · DBA角色与职责边界</div>
+    <div class="chapter-subtitle">理解数据库管理员智能体的角色定位与协作边界</div>
+    <div class="think-box" id="think-1">
+    <div class="think-title">🤔 思考一下</div>
+    <div class="think-question">在 Agentic 数字团队中，数据库管理员（DBA）智能体与系统架构师智能体的核心职责边界是什么？</div>
+    <div class="think-options" id="think-1-opts"><div class="option" data-idx="0" onclick="selectOption(this, 'think-1')">A. DBA负责设计数据库ER图，架构师负责编写SQL</div><div class="option" data-idx="1" onclick="selectOption(this, 'think-1')">B. 架构师设计数据库结构（表结构、索引策略），DBA负责创建数据库、初始化数据、备份恢复、变更管理等运维工作</div><div class="option" data-idx="2" onclick="selectOption(this, 'think-1')">C. DBA和架构师都负责数据库设计，分工没有区别</div><div class="option" data-idx="3" onclick="selectOption(this, 'think-1')">D. DBA只负责备份数据，其余都由架构师完成</div></div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-1')">查看答案</button>
+    <div class="answer-content" id="think-1-answer">
+        <p><strong>✅ 正确答案：B. 架构师设计数据库结构，DBA负责创建、初始化、备份、变更管理等运维工作</strong></p>
+        <p>职责边界清晰：系统架构师负责数据库的逻辑设计和物理设计（ER图、表关系、索引策略），而DBA智能体负责将设计落地为实际数据库，并承担后续的初始化、测试数据、备份恢复、变更管理等全生命周期运维工作。DBA不参与数据库结构设计决策。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="DBA角色与职责边界">
+    <h3>数据库管理员智能体的职责范围</h3>
+    <p>在 Agentic 数字团队中，数据库管理员智能体是数据的守护者。它接收架构师的数据库设计文档，负责将设计落地为可运行的数据库实例，并持续执行日常运维工作，确保数据安全、高可用和性能稳定。</p>
+<div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));"><div class="card">
+    <div class="card-icon">🏗️</div><div class="card-title">数据库创建</div>
+    <p>根据架构师设计的DDL脚本，自动创建数据库、表空间、用户和权限体系</p>
+</div><div class="card">
+    <div class="card-icon">📥</div><div class="card-title">基础数据初始化</div>
+    <p>导入初始基础数据（字典表、配置表、行政区划、权限数据等），确保系统可运行</p>
+</div><div class="card">
+    <div class="card-icon">🧪</div><div class="card-title">测试数据生成</div>
+    <p>根据业务规则自动生成符合规范的测试数据，覆盖正常、边界和异常场景</p>
+</div><div class="card">
+    <div class="card-icon">💾</div><div class="card-title">备份与恢复</div>
+    <p>制定自动化备份策略（全量/增量/日志），支持时间点恢复和数据应急恢复</p>
+</div><div class="card">
+    <div class="card-icon">🔄</div><div class="card-title">结构变更管理</div>
+    <p>执行Schema版本管理、数据库迁移（Migration）、变更回滚和数据迁移</p>
+</div><div class="card">
+    <div class="card-icon">📊</div><div class="card-title">日常监控巡检</div>
+    <p>监控连接数、慢查询、锁等待、磁盘空间，自动告警并生成巡检报告</p>
+</div></div>
+<div class="compare-table"><div class="table-header"><div class="table-row"><div class="table-cell">职责项</div><div class="table-cell">系统架构师</div><div class="table-cell">DBA智能体</div></div></div><div class="table-body"><div class="table-row"><div class="table-cell">表结构设计（ER图）</div><div class="table-cell">✅ 负责</div><div class="table-cell">❌ 不参与</div></div><div class="table-row"><div class="table-cell">索引策略设计</div><div class="table-cell">✅ 负责</div><div class="table-cell">❌ 执行阶段优化建议</div></div><div class="table-row"><div class="table-cell">数据库创建与初始化</div><div class="table-cell">❌</div><div class="table-cell">✅ 负责</div></div><div class="table-row"><div class="table-cell">基础数据导入</div><div class="table-cell">❌</div><div class="table-cell">✅ 负责</div></div><div class="table-row"><div class="table-cell">测试数据生成</div><div class="table-cell">❌</div><div class="table-cell">✅ 负责</div></div><div class="table-row"><div class="table-cell">备份恢复策略</div><div class="table-cell">❌</div><div class="table-cell">✅ 负责</div></div><div class="table-row"><div class="table-cell">Schema版本管理</div><div class="table-cell">❌</div><div class="table-cell">✅ 执行</div></div></div></div><p class="table-caption">系统架构师与DBA智能体的职责分工矩阵</p>
+</section>
+<section class="slide" id="数据库创建与基础数据初始化">
+    <div class="chapter-title">第2章 · 数据库创建与基础数据初始化</div>
+    <div class="chapter-subtitle">根据架构设计落地数据库实例，注入运行必备基础数据</div>
+    <div class="think-box" id="think-2">
+    <div class="think-title">🏷️ 选择与本章相关的概念</div>
+    <div class="think-question">DBA智能体在创建数据库时，通常需要关注哪些方面？（选出所有正确项）</div>
+    <div class="tag-container" id="think-2-tags"><span class="tag tag-blue" onclick="toggleTag(this, 'think-2')">字符集与排序规则</span><span class="tag tag-purple" onclick="toggleTag(this, 'think-2')">表空间规划</span><span class="tag tag-green" onclick="toggleTag(this, 'think-2')">用户与权限体系</span><span class="tag tag-amber" onclick="toggleTag(this, 'think-2')">ER图逻辑设计</span></div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-2')">查看答案</button>
+    <div class="answer-content" id="think-2-answer">
+        <p><strong>正确选项：字符集与排序规则、表空间规划、用户与权限体系</strong></p>
+        <div class="answer-tags"><span class="tag tag-green">字符集与排序规则</span><span class="tag tag-green">表空间规划</span><span class="tag tag-green">用户与权限体系</span></div>
+        <p style="margin-top:12px">ER图逻辑设计属于系统架构师的职责范畴，DBA智能体负责的是将设计落地执行。字符集决定了多语言存储能力，表空间规划影响物理存储分布，用户权限体系确保数据安全访问。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="数据库创建与基础数据初始化">
+    <h3>数据库创建与基础数据初始化</h3>
+    <p>DBA智能体从架构师处接收数据库设计文档（DDL脚本、ER图、数据字典），自动执行数据库创建流程，并导入系统运行所需的基础数据。</p>
+<div class="flow-steps"><div class="flow-step">
+    <div class="step-num">1</div>
+    <div>
+        <h5>接收设计文档</h5>
+        <p>从架构师获取DDL脚本、表结构定义、索引设计、外键约束、存储过程等内容</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">2</div>
+    <div>
+        <h5>创建数据库实例</h5>
+        <p>执行CREATE DATABASE，配置字符集（UTF-8/UTF-8MB4）、排序规则、表空间和存储参数</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">3</div>
+    <div>
+        <h5>执行DDL建表</h5>
+        <p>运行架构师提供的DDL脚本创建所有表、索引、视图、存储过程等数据库对象</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">4</div>
+    <div>
+        <h5>创建用户与权限</h5>
+        <p>按最小权限原则创建应用用户、只读用户、管理用户，分配对应权限</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">5</div>
+    <div>
+        <h5>导入基础数据</h5>
+        <p>加载字典表、配置表、系统参数、行政区划、初始管理账号等基础数据</p>
+    </div>
+</div></div>
+<div class="code-wrapper">
+    <div class="code-caption">DBA智能体自动生成的数据库创建脚本示例（订单系统）</div>
+    <pre class="code-block"><code class="lang-sql">-- AI生成：订单系统数据库初始化（接收自架构师DDL）
+-- 第1步：创建数据库
+CREATE DATABASE IF NOT EXISTS order_system
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+-- 第2步：创建应用用户（最小权限原则）
+CREATE USER IF NOT EXISTS 'app_user'@'%' IDENTIFIED BY '********';
+CREATE USER IF NOT EXISTS 'readonly_user'@'%' IDENTIFIED BY '********';
+CREATE USER IF NOT EXISTS 'dba_admin'@'localhost' IDENTIFIED BY '********';
+
+-- 第3步：授予权限
+GRANT SELECT, INSERT, UPDATE, DELETE ON order_system.* TO 'app_user'@'%';
+GRANT SELECT ON order_system.* TO 'readonly_user'@'%';
+GRANT ALL PRIVILEGES ON order_system.* TO 'dba_admin'@'localhost';
+
+-- 第4步：创建基础字典表
+CREATE TABLE order_system.sys_dict (
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    dict_type   VARCHAR(64)  NOT NULL COMMENT '字典类型',
+    dict_key    VARCHAR(64)  NOT NULL COMMENT '字典键',
+    dict_value  VARCHAR(256) NOT NULL COMMENT '字典值',
+    sort_order  INT          DEFAULT 0 COMMENT '排序',
+    status      TINYINT      DEFAULT 1 COMMENT '状态: 1启用 0禁用',
+    created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dict_type (dict_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统字典表';
+
+-- 第5步：初始化基础数据
+INSERT INTO order_system.sys_dict (dict_type, dict_key, dict_value, sort_order) VALUES
+('order_status', 'PENDING',   '待支付', 1),
+('order_status', 'PAID',      '已支付', 2),
+('order_status', 'SHIPPED',   '已发货', 3),
+('order_status', 'DELIVERED', '已签收', 4),
+('order_status', 'CANCELLED', '已取消', 5),
+('payment_method', 'WECHAT',  '微信支付', 1),
+('payment_method', 'ALIPAY',  '支付宝',  2);</code></pre>
+</div>
+<div class="highlight-box highlight-indigo">
+    <div class="highlight-header"><span>💡</span><strong>最佳实践：数据库初始化检查清单</strong></div>
+    <p>①确认字符集与业务需求匹配（中文项目统一使用utf8mb4）②采用最小权限原则分配数据库用户 ③基础数据纳入版本管理（Git）④初始化脚本支持幂等执行（IF NOT EXISTS）⑤记录初始化日志以备审计</p>
+</div>
+</section>
+<section class="slide" id="测试数据管理">
+    <div class="chapter-title">第3章 · 测试数据管理</div>
+    <div class="chapter-subtitle">智能生成符合业务场景的测试数据，支撑开发与测试工作</div>
+    <div class="think-box" id="think-3">
+    <div class="think-title">🤔 思考一下</div>
+    <div class="think-question">DBA智能体生成测试数据时，为什么不能直接复制生产数据到测试环境？</div>
+    <div class="think-options" id="think-3-opts"><div class="option" data-idx="0" onclick="selectOption(this, 'think-3')">A. 复制生产数据速度太慢</div><div class="option" data-idx="1" onclick="selectOption(this, 'think-3')">B. 生产数据包含用户隐私信息，直接复制违反数据安全法规，且敏感数据需要脱敏处理</div><div class="option" data-idx="2" onclick="selectOption(this, 'think-3')">C. 生产数据格式不符合测试框架要求</div><div class="option" data-idx="3" onclick="selectOption(this, 'think-3')">D. 数据库不允许跨环境复制</div></div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-3')">查看答案</button>
+    <div class="answer-content" id="think-3-answer">
+        <p><strong>✅ 正确答案：B. 生产数据包含用户隐私信息，直接复制违反数据安全法规</strong></p>
+        <p>生产数据通常包含用户手机号、身份证、地址等敏感个人信息，直接复制到测试环境存在严重的数据安全风险，违反《个人信息保护法》和GDPR等法规。DBA智能体应采用数据脱敏工具（如动态脱敏）或按业务规则独立生成合规的仿真测试数据。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="测试数据管理">
+    <h3>测试数据管理</h3>
+    <p>高质量的测试数据是保障开发与测试效率的基础。DBA智能体能够根据表结构和业务规则自动生成符合规范、覆盖全面、安全合规的测试数据集。</p>
+<div class="compare-grid"><div class="compare-card ">
+    <div class="compare-header">
+        <span class="compare-icon">📋</span>
+        <h5>静态测试数据</h5>
+    </div>
+    <div class="compare-desc"><p>预定义的固定数据集</p></div>
+    <div class="compare-features"><span class="feature-tag">手动编写INSERT语句，适合少量基础数据</span><span class="feature-tag">数据量固定，可重复执行</span><span class="feature-tag">结果可预测，适合单元测试</span><span class="feature-tag">维护成本随项目规模增长</span></div>
+</div><div class="compare-card featured">
+    <div class="compare-header">
+        <span class="compare-icon">🤖</span>
+        <h5>AI生成测试数据</h5>
+    </div>
+    <div class="compare-desc"><p>智能仿真数据</p></div>
+    <div class="compare-features"><span class="feature-tag">AI分析表结构自动生成仿真数据</span><span class="feature-tag">支持大规模数据量（10万+记录）</span><span class="feature-tag">自动处理外键关系和数据一致性</span><span class="feature-tag">支持脱敏规则，满足合规要求</span></div>
+</div></div>
+<div class="code-wrapper">
+    <div class="code-caption">DBA智能体根据表结构自动生成的测试数据脚本</div>
+    <pre class="code-block"><code class="lang-sql">-- AI生成：电商订单系统测试数据（10万条记录）
+-- 遵循表间外键约束，自动生成关联数据
+
+-- 1. 生成用户数据（使用仿真姓名、手机号脱敏）
+INSERT INTO users (username, phone, email, register_time, user_level)
+SELECT
+    CONCAT('test_user_', n),
+    CONCAT('138****', LPAD(FLOOR(RAND() * 10000), 4, '0')),
+    CONCAT('test_', n, '@example.com'),
+    DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 365) DAY),
+    ELT(FLOOR(1 + RAND() * 4), '普通', '银卡', '金卡', '钻石')
+FROM (
+    SELECT @row := @row + 1 AS n
+    FROM information_schema.columns a,
+         information_schema.columns b,
+         (SELECT @row := 0) r
+    LIMIT 10000
+) t;
+
+-- 2. 生成订单数据（关联用户，合理分布状态）
+INSERT INTO orders (user_id, total_amount, status, created_at)
+SELECT
+    FLOOR(1 + RAND() * 10000),
+    ROUND(RAND() * 5000, 2),
+    ELT(FLOOR(1 + RAND() * 5), 'PENDING','PAID','SHIPPED','DELIVERED','CANCELLED'),
+    DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 90) DAY)
+FROM (
+    SELECT @row2 := @row2 + 1 AS n
+    FROM information_schema.columns a,
+         (SELECT @row2 := 0) r
+    LIMIT 50000
+) t;</code></pre>
+</div>
+<div class="highlight-box highlight-amber">
+    <div class="highlight-header"><span>⚠️</span><strong>测试数据规范要求</strong></div>
+    <p>①禁止使用真实用户个人信息 ②脱敏后数据仍保留原始业务特征（如手机号格式正确但内容虚假）③测试数据需覆盖正常值、边界值、异常值 ④大数据量测试关注索引效果和查询性能 ⑤测试数据版本化，确保不同环境数据一致</p>
+</div>
+</section>
+<section class="slide" id="数据备份与恢复">
+    <div class="chapter-title">第4章 · 数据备份与恢复</div>
+    <div class="chapter-subtitle">制定自动化备份策略，确保数据安全与业务连续性</div>
+    <div class="think-box" id="think-4">
+    <div class="think-title">💬 思考与讨论</div>
+    <div class="think-question">某业务系统每天产生约100GB数据变更，RTO要求4小时，RPO要求30分钟。作为DBA智能体，你会设计怎样的备份策略？</div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-4')">查看参考答案</button>
+    <div class="answer-content" id="think-4-answer">
+        <p><strong>推荐策略：</strong>全量备份（每周日凌晨） + 增量备份（每天凌晨） + 事务日志备份（每30分钟）。RPO 30分钟可由日志备份频率保障，RTO 4小时可通过并行恢复和预配置备用实例实现。同时应定期执行恢复演练，验证备份文件的可恢复性。</p>
+        <p>备份保留策略：全量保留30天，增量保留7天，日志保留72小时。所有备份文件需异地冗余存储。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="数据备份与恢复">
+    <h3>数据备份与恢复</h3>
+    <p>数据备份是DBA最重要的职责之一。AI DBA智能体能根据业务需求和SLA要求自动制定备份策略，执行备份任务，并支持一键式时间点恢复和数据应急恢复。</p>
+<div class="flow-steps"><div class="flow-step">
+    <div class="step-num">1</div>
+    <div>
+        <h5>策略制定</h5>
+        <p>根据RPO/RTO要求自动配置备份频率：全量（周）、增量（日）、日志（分钟级），设定保留周期</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">2</div>
+    <div>
+        <h5>自动执行备份</h5>
+        <p>定时任务自动执行备份脚本，完成后校验备份文件完整性，记录备份元数据到管理表</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">3</div>
+    <div>
+        <h5>备份文件管理</h5>
+        <p>自动加密备份文件，按策略分存储到本地/异地/云存储，定期清理过期备份</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">4</div>
+    <div>
+        <h5>恢复演练</h5>
+        <p>定期在隔离环境执行恢复验证，确保备份文件可恢复，并记录恢复耗时</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">5</div>
+    <div>
+        <h5>应急恢复</h5>
+        <p>收到恢复指令后自动选择最近的完整备份链，执行时间点恢复（PITR），通知团队恢复结果</p>
+    </div>
+</div></div>
+<div class="code-wrapper">
+    <div class="code-caption">DBA智能体生成的MySQL自动化备份脚本（支持全量+增量+日志）</div>
+    <pre class="code-block"><code class="lang-bash">#!/bin/bash
+# AI生成：MySQL自动化备份脚本 - DBA智能体
+set -e
+
+DB_NAME="order_system"
+BACKUP_DIR="/backup/mysql/$(date +%Y%m%d)"
+LOG_FILE="/var/log/dba/backup.log"
+RETENTION_DAYS=30
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"; }
+
+# 全量备份（每周日凌晨2:00）
+do_full_backup() {
+    log "开始全量备份: $DB_NAME"
+    mkdir -p "$BACKUP_DIR/full"
+    mysqldump --single-transaction --routines --triggers \
+        --databases "$DB_NAME" \
+        | gzip > "$BACKUP_DIR/full/${DB_NAME}_full_$(date +%H%M).sql.gz"
+    
+    # 校验备份完整性
+    gzip -t "$BACKUP_DIR/full/"*.sql.gz && \
+        log "全量备份完成，文件大小: $(du -h "$BACKUP_DIR/full/"*.sql.gz | cut -f1)"
+}
+
+# 增量备份（每天凌晨1:00，使用二进制日志）
+do_incremental_backup() {
+    log "开始增量备份"
+    mkdir -p "$BACKUP_DIR/incr"
+    mysqladmin flush-logs
+    cp /var/lib/mysql/binlog.* "$BACKUP_DIR/incr/" 2>/dev/null || true
+    log "增量备份完成"
+}
+
+# 时间点恢复（PITR）
+do_pitr_restore() {
+    local TARGET_TIME="$1" # 格式: '2024-06-15 14:30:00'
+    log "开始时间点恢复到: $TARGET_TIME"
+    
+    # 1. 恢复最近的全量备份
+    gunzip -c "$(ls -t /backup/mysql/*/full/*.sql.gz | head -1)" | mysql "$DB_NAME"
+    
+    # 2. 应用增量日志到目标时间点
+    mysqlbinlog --stop-datetime="$TARGET_TIME" /backup/mysql/*/incr/binlog.* | mysql "$DB_NAME"
+    
+    log "时间点恢复完成: $TARGET_TIME"
+}
+
+# 清理过期备份
+cleanup_old_backups() {
+    find /backup/mysql -type d -mtime +$RETENTION_DAYS -exec rm -rf {} \; 2>/dev/null
+    log "清理超过${RETENTION_DAYS}天的旧备份"
+}
+
+# 主流程
+case "${1:-full}" in
+    full)   do_full_backup && cleanup_old_backups ;;
+    incr)   do_incremental_backup ;;
+    restore) do_pitr_restore "$2" ;;
+    *)      echo "用法: $0 {full|incr|restore <时间点>}" ;;
+esac</code></pre>
+</div>
+<div class="highlight-box highlight-green">
+    <div class="highlight-header"><span>🔐</span><strong>备份安全规范</strong></div>
+    <p>①备份文件传输过程使用SSH/SSL加密 ②备份文件存储时使用AES-256加密 ③备份元数据（时间、大小、校验值）记录到独立的备份管理表 ④至少保留3份不同时间点的完整备份 ⑤每月至少执行一次恢复演练，验证备份可用性</p>
+</div>
+</section>
+<section class="slide" id="数据库结构变更管理">
+    <div class="chapter-title">第5章 · 数据库结构变更管理</div>
+    <div class="chapter-subtitle">Schema版本控制、迁移执行与变更回滚</div>
+    <div class="think-box" id="think-5">
+    <div class="think-title">💬 思考与讨论</div>
+    <div class="think-question">一次数据库结构变更引入了破坏性修改（如删除列），导致生产服务异常。DBA智能体应如何提前识别风险并防范？</div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-5')">查看参考答案</button>
+    <div class="answer-content" id="think-5-answer">
+        <p><strong>应对策略：</strong>①变更前自动对比Schema差异，同步应用代码查询依赖——若某列被应用中SQL引用，发出阻断告警 ②变更脚本一律采用版本化迁移模式（如Flyway/Liquibase），每次变更有独立的可回滚脚本 ③自动在预发布环境执行变更并运行全量测试，验证通过后再推送到生产 ④生产变更采用灰度策略：先在一个只读副本上执行，观察无异常后再切主库 ⑤所有变更操作记录审计日志，支持一键回滚到前一版本。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="数据库结构变更管理">
+    <h3>数据库结构变更管理</h3>
+    <p>结构变更是数据库运维中风险最高的操作。DBA智能体采用版本化的迁移管理模式，每次变更都有唯一版本号、可重复执行、可安全回滚，确保数据库Schema变更可追溯、可审计。</p>
+<div class="feature-list"><div class="feature-item">
+    <strong>Schema版本控制</strong>
+    <p>所有DDL变更纳入Git版本管理，按时间戳或语义版本号命名，配合Flyway/Liquibase实现版本化的自动迁移</p>
+</div><div class="feature-item">
+    <strong>变更预检</strong>
+    <p>执行变更前自动检测：表锁影响、外键依赖、数据兼容性、应用代码查询依赖，识别潜在风险</p>
+</div><div class="feature-item">
+    <strong>灰度发布</strong>
+    <p>支持蓝绿部署和灰度执行，先在从库执行观察，确认无问题后再推送到主库，降低变更风险</p>
+</div><div class="feature-item">
+    <strong>一键回滚</strong>
+    <p>每次变更自动生成对应的回滚脚本（Down Migration），发现异常秒级回滚到前一版本</p>
+</div><div class="feature-item">
+    <strong>审计追踪</strong>
+    <p>记录每次变更的时间、操作人、变更内容、影响范围，生成完整的数据库变更审计日志</p>
+</div><div class="feature-item">
+    <strong>数据迁移</strong>
+    <p>表结构调整时自动处理数据迁移（如新增字段设置默认值、字段类型变更的数据转换）</p>
+</div></div>
+<div class="code-wrapper">
+    <div class="code-caption">Flyway版本化迁移示例：订单表新增字段 + 数据迁移</div>
+    <pre class="code-block"><code class="lang-sql">-- ============================================
+-- Migration: V2.1__add_discount_to_orders.sql
+-- 描述: 订单表新增优惠金额和优惠券字段
+-- 作者: DBA智能体
+-- 日期: 2024-06-15
+-- ============================================
+
+-- UP Migration：执行变更
+START TRANSACTION;
+
+ALTER TABLE orders
+    ADD COLUMN discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00
+        COMMENT '优惠金额' AFTER total_amount,
+    ADD COLUMN coupon_id BIGINT NULL
+        COMMENT '使用的优惠券ID' AFTER discount_amount,
+    ADD COLUMN coupon_code VARCHAR(64) NULL
+        COMMENT '优惠券码' AFTER coupon_id,
+    ADD INDEX idx_coupon_id (coupon_id);
+
+-- 历史数据填充：将旧数据的优惠金额设为0
+UPDATE orders SET discount_amount = 0.00 WHERE discount_amount IS NULL;
+
+COMMIT;
+
+-- ============================================
+-- Rollback: V2.1__add_discount_to_orders.sql
+-- Down Migration：回滚变更
+-- ============================================
+
+-- START ROLLBACK;
+-- ALTER TABLE orders
+--     DROP COLUMN discount_amount,
+--     DROP COLUMN coupon_id,
+--     DROP COLUMN coupon_code;
+-- COMMIT;</code></pre>
+</div>
+<div class="code-wrapper">
+    <div class="code-caption">DBA智能体执行的Schema版本状态查询</div>
+    <pre class="code-block"><code class="lang-sql">-- 查看迁移版本历史
+SELECT version, description, script, installed_on, execution_time_ms, success
+FROM flyway_schema_history
+ORDER BY installed_on DESC;
+
+-- 输出示例:
+-- version | description              | script                        | installed_on        | time_ms | success
+-- V1.0    | 初始建表                  | V1.0__init_schema.sql         | 2024-01-15 10:00:00 | 2345    | 1
+-- V1.1    | 用户表新增会员等级字段    | V1.1__add_member_level.sql    | 2024-02-20 14:30:00 | 456     | 1
+-- V2.0    | 订单分表重构              | V2.0__order_sharding.sql      | 2024-04-01 02:00:00 | 12000   | 1
+-- V2.1    | 订单表新增优惠金额字段    | V2.1__add_discount.sql        | 2024-06-15 22:00:00 | 890     | 1</code></pre>
+</div>
+</section>
+<section class="slide" id="日常监控与巡检">
+    <div class="chapter-title">第6章 · 日常监控与巡检</div>
+    <div class="chapter-subtitle">AI驱动的数据库健康巡检、性能分析与智能告警</div>
+    <div class="think-box" id="think-6">
+    <div class="think-title">🏷️ 选择与本章相关的概念</div>
+    <div class="think-question">以下哪些属于DBA智能体日常巡检的关键指标？（选出所有正确项）</div>
+    <div class="tag-container" id="think-6-tags"><span class="tag tag-blue" onclick="toggleTag(this, 'think-6')">连接数使用率</span><span class="tag tag-purple" onclick="toggleTag(this, 'think-6')">慢查询数量</span><span class="tag tag-green" onclick="toggleTag(this, 'think-6')">数据库版本号</span><span class="tag tag-amber" onclick="toggleTag(this, 'think-6')">锁等待情况</span><span class="tag tag-cyan" onclick="toggleTag(this, 'think-6')">磁盘使用率</span></div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-6')">查看答案</button>
+    <div class="answer-content" id="think-6-answer">
+        <p><strong>正确选项：连接数使用率、慢查询数量、锁等待情况、磁盘使用率</strong></p>
+        <div class="answer-tags"><span class="tag tag-green">连接数使用率</span><span class="tag tag-green">慢查询数量</span><span class="tag tag-green">锁等待情况</span><span class="tag tag-green">磁盘使用率</span></div>
+        <p style="margin-top:12px">数据库版本号属于资产管理范畴，日常巡检的核心关注点是数据库的健康状态和性能趋势。连接数过高可能耗尽连接池，慢查询影响响应时间，锁等待表明存在并发竞争，磁盘不足可能导致数据库只读或宕机。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="日常监控与巡检">
+    <h3>日常监控与巡检</h3>
+    <p>DBA智能体通过持续监控数据库的运行指标，及时发现并预警潜在问题，生成结构化的日常巡检报告，让数据库运维从被动救火转变为主动预防。</p>
+<div class="compare-table"><div class="table-header"><div class="table-row"><div class="table-cell">监控指标</div><div class="table-cell">正常范围</div><div class="table-cell">告警阈值</div><div class="table-cell">AI处理策略</div></div></div><div class="table-body"><div class="table-row"><div class="table-cell">活跃连接数</div><div class="table-cell">&lt; 80% 最大连接数</div><div class="table-cell">≥ 80%</div><div class="table-cell">自动分析连接来源，清理空闲连接</div></div><div class="table-row"><div class="table-cell">慢查询（每5分钟）</div><div class="table-cell">&lt; 10条</div><div class="table-cell">≥ 50条</div><div class="table-cell">分析慢查询SQL，推荐索引优化方案</div></div><div class="table-row"><div class="table-cell">锁等待</div><div class="table-cell">&lt; 5秒</div><div class="table-cell">≥ 30秒</div><div class="table-cell">识别阻塞源头，建议终止长时间事务</div></div><div class="table-row"><div class="table-cell">磁盘使用率</div><div class="table-cell">&lt; 70%</div><div class="table-cell">≥ 85%</div><div class="table-cell">分析增长趋势，清理过期数据或扩容</div></div><div class="table-row"><div class="table-cell">QPS/TPS</div><div class="table-cell">基线 ± 30%</div><div class="table-cell">骤降/骤升</div><div class="table-cell">关联业务活动，排查异常流量或故障</div></div><div class="table-row"><div class="table-cell">复制延迟</div><div class="table-cell">&lt; 5秒</div><div class="table-cell">≥ 60秒</div><div class="table-cell">检查从库性能，重建复制链路</div></div></div></div><p class="table-caption">DBA智能体监控指标体系</p>
+<div class="code-wrapper">
+    <div class="code-caption">DBA智能体生成的日常巡检报告（Markdown格式）</div>
+    <pre class="code-block"><code class="lang-markdown"># 数据库日常巡检报告
+> 生成时间: 2024-06-18 08:00   |   巡检实例: order-system-master
+> 状态: ✅ 健康（通过全部检查项）
+
+## 1. 连接状况
+- 当前连接数: 87 / 200（43.5%）✅ 正常
+- 最大连接数峰值: 145（2024-06-17 20:00）
+- 空闲连接: 12个（约14%）可回收
+
+## 2. 性能指标（过去24小时）
+| 指标 | 平均值 | 峰值 | 评估 |
+|------|--------|------|------|
+| QPS  | 1250   | 3800 | ✅    |
+| TPS  | 45     | 120  | ✅    |
+| 慢查询 | 2条/小时 | 8条  | ✅    |
+
+## 3. 锁情况
+- 当前锁等待: 0 ✅
+- 死锁次数（24h）: 0 ✅
+- 最长事务运行时间: 2分30秒（正常）
+
+## 4. 存储状况
+- 数据文件: 234.5GB / 500GB（46.9%）✅
+- 日志文件: 12.3GB / 50GB（24.6%）✅
+- 增长趋势: 约 1.2GB/天 → 预计可用: 221天
+
+## 5. 建议事项
+- [低] 索引优化: orders.create_time 全表扫描频率较高（日均23次）
+- [低] 建议清理30天前的日志归档数据（当前保留60天）</code></pre>
+</div>
+<div class="highlight-box highlight-indigo">
+    <div class="highlight-header"><span>🤖</span><strong>AI智能告警降噪</strong></div>
+    <p>DBA智能体内置告警降噪引擎：对同类告警进行聚合，识别告警之间的因果关系（如磁盘告警→慢查询告警→锁等待告警只上报根因），避免告警风暴。同时根据历史模式自动调整阈值，减少误报。</p>
+</div>
+</section>
+
+<section class="slide" id="practice">
+    <div class="chapter-title">🛠️ 实战项目：为电商系统构建完整DBA运维体系</div>
+    <div class="chapter-subtitle">使用CodeBuddy数据库管理员智能体，针对一个电商订单系统，从数据库创建到日常运维构建完整的数据管理解决方案。</div>
+    <div class="practice-section">
+        <div class="practice-label">🔢 实践步骤</div>
+        <div class="practice-steps"><div class="practice-step">
+    <div class="practice-step-num">STEP 1</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 1：根据架构设计创建数据库</div>
+        <div class="practice-step-desc">获取架构师提供的DDL脚本，创建订单系统的数据库、表空间、用户权限，并导入基础字典数据。</div>
+    </div>
+</div>
+<div class="practice-step">
+    <div class="practice-step-num">STEP 2</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 2：生成测试数据</div>
+        <div class="practice-step-desc">使用AI分析表关系和外键依赖，生成10万+条符合业务规则的仿真测试数据，覆盖多种订单状态和用户等级。</div>
+    </div>
+</div>
+<div class="practice-step">
+    <div class="practice-step-num">STEP 3</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 3：配置备份策略并执行</div>
+        <div class="practice-step-desc">设计全量+增量+日志的备份策略（RPO 30分钟、RTO 4小时），编写自动化备份脚本并进行恢复演练。</div>
+    </div>
+</div>
+<div class="practice-step">
+    <div class="practice-step-num">STEP 4</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 4：执行Schema版本化变更</div>
+        <div class="practice-step-desc">模拟业务需求变更（订单表新增优惠券字段），编写Flyway版本化迁移脚本（含UP和DOWN），执行并验证回滚。</div>
+    </div>
+</div>
+<div class="practice-step">
+    <div class="practice-step-num">STEP 5</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 5：生成日常巡检报告</div>
+        <div class="practice-step-desc">让AI DBA智能体收集数据库运行指标，生成结构化的健康巡检报告，识别潜在风险并提出优化建议。</div>
+    </div>
+</div>
+</div>
+    </div>
+</section>
+<section class="slide" id="summary">
+    <div class="chapter-title">📋 课程总结</div>
+    <div class="summary-grid"><div class="summary-card">
+    <div class="summary-icon">🗄️</div>
+    <div class="summary-label">职责模块</div>
+    <div class="summary-value">6大</div>
+</div>
+<div class="summary-card">
+    <div class="summary-icon">🤖</div>
+    <div class="summary-label">AI自动化率</div>
+    <div class="summary-value">85%+</div>
+</div>
+<div class="summary-card">
+    <div class="summary-icon">⚡</div>
+    <div class="summary-label">运维效率提升</div>
+    <div class="summary-value">10倍</div>
+</div>
+<div class="summary-card">
+    <div class="summary-icon">🔒</div>
+    <div class="summary-label">备份恢复效率</div>
+    <div class="summary-value">分钟级</div>
+</div>
+<div class="summary-card">
+    <div class="summary-icon">📋</div>
+    <div class="summary-label">核心工具</div>
+    <div class="summary-value">6个</div>
+</div>
+</div>
+    <h4>核心知识点回顾</h4>
+    <div class="summary-key-points"><div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">DBA智能体不设计数据库结构（那是架构师的职责），专注于数据库创建、初始化、备份、变更管理等运维工作</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">数据库创建遵循最小权限原则，基础数据纳入版本管理，初始化脚本支持幂等执行</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">测试数据不能直接复制生产数据，应采用AI生成的仿真数据并遵守数据安全法规</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">备份策略遵循「3-2-1」原则：至少3份副本，2种不同介质，1份异地存储，并定期恢复演练</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">Schema变更采用版本化迁移（Flyway/Liquibase），每次变更含正向和回滚脚本，支持一键回滚</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">日常巡检覆盖连接数、慢查询、锁等待、磁盘、复制延迟等关键指标，AI自动降噪告警</div>
+</div>
+</div>
+</section>
+<section class="slide" id="homework">
+    <div class="chapter-title">📝 课程作业</div>
+    <div class="chapter-subtitle">完成以下作业以巩固所学知识</div>
+    <div class="homework-grid"><div class="homework-card">
+    <div class="homework-header">
+        <div class="homework-num">作业 01</div>
+        <div class="homework-difficulty"><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-empty">★</span><span class="diff-empty">★</span><span class="diff-empty">★</span></div>
+    </div>
+    <div class="homework-title">作业一：数据库初始化脚本编写</div>
+    <div class="homework-desc"><p>根据提供的电商系统DDL设计，编写完整的数据库创建和初始化脚本</p></div>
+    <div class="homework-requirements">
+        <div class="req-title">📋 具体要求</div>
+        <div class="req-item"><span class="req-icon">▸</span>设计一个包含用户、商品、订单、支付四张核心表的数据库初始化方案</div><div class="req-item"><span class="req-icon">▸</span>包含数据库创建、用户创建与权限分配（最小权限原则）</div><div class="req-item"><span class="req-icon">▸</span>包含至少3张基础字典表及初始化数据</div><div class="req-item"><span class="req-icon">▸</span>支持幂等执行（IF NOT EXISTS）</div><div class="req-item"><span class="req-icon">▸</span>脚本提交为 .sql 文件，添加中文注释说明</div>
+    </div>
+    <div><span class="output-label">交付物</span><span class="output-text">完整的数据库初始化SQL脚本 + 200字设计说明</span></div>
+</div>
+<div class="homework-card">
+    <div class="homework-header">
+        <div class="homework-num">作业 02</div>
+        <div class="homework-difficulty"><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-empty">★</span><span class="diff-empty">★</span></div>
+    </div>
+    <div class="homework-title">作业二：备份策略设计与实现</div>
+    <div class="homework-desc"><p>为一个日增50GB数据的业务系统设计备份恢复方案</p></div>
+    <div class="homework-requirements">
+        <div class="req-title">📋 具体要求</div>
+        <div class="req-item"><span class="req-icon">▸</span>明确RPO和RTO指标（RPO ≤ 1小时，RTO ≤ 2小时）</div><div class="req-item"><span class="req-icon">▸</span>设计全量、增量、日志备份的调度策略与保留周期</div><div class="req-item"><span class="req-icon">▸</span>编写自动化备份Shell脚本（含完整性校验）</div><div class="req-item"><span class="req-icon">▸</span>设计恢复演练方案（恢复步骤、验证方法、演练频率）</div><div class="req-item"><span class="req-icon">▸</span>考虑异地容灾和备份加密</div>
+    </div>
+    <div><span class="output-label">交付物</span><span class="output-text">备份策略方案文档（Markdown）+ 自动化备份脚本</span></div>
+</div>
+<div class="homework-card">
+    <div class="homework-header">
+        <div class="homework-num">作业 03</div>
+        <div class="homework-difficulty"><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-empty">★</span></div>
+    </div>
+    <div class="homework-title">作业三：Schema变更及数据迁移</div>
+    <div class="homework-desc"><p>模拟一次数据库结构变更：商品表新增「规格属性JSON字段」并迁移旧数据</p></div>
+    <div class="homework-requirements">
+        <div class="req-title">📋 具体要求</div>
+        <div class="req-item"><span class="req-icon">▸</span>编写Flyway版本化迁移脚本（V2.0）包含UP和DOWN</div><div class="req-item"><span class="req-icon">▸</span>ALTER TABLE添加新字段（JSON类型存储规格属性）</div><div class="req-item"><span class="req-icon">▸</span>编写数据迁移逻辑：将旧表中的规格字段转为JSON格式</div><div class="req-item"><span class="req-icon">▸</span>迁移前做兼容性预检，迁移后做数据校验</div><div class="req-item"><span class="req-icon">▸</span>（进阶）设计灰度发布策略，分批次执行变更</div>
+    </div>
+    <div><span class="output-label">交付物</span><span class="output-text">Flyway迁移脚本（UP+DOWM）+ 数据校验脚本 + 变更方案文档</span></div>
+</div>
+</div>
+    <div class="ending">
+        <h2>数据是企业的核心资产，DBA是资产的守护者</h2>
+        <p>完成本课程后，你将掌握AI驱动的数据库管理核心技能。</p>
+    </div>
+</section>
+</main>
+<script>
+function toggleSidebar() {
+    const sb = document.querySelector('.sidebar');
+    const btn = document.querySelector('.sidebar-toggle');
+    sb.classList.toggle('hidden');
+    btn.textContent = sb.classList.contains('hidden') ? '▶' : '◀';
+}
+function toggleTheme() {
+    document.body.classList.toggle('light');
+    const btn = document.querySelector('.theme-toggle');
+    btn.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+}
+function toggleAnswer(id) {
+    const el = document.getElementById(id + '-answer');
+    el.classList.toggle('show');
+    const btn = el.previousElementSibling;
+    btn.textContent = el.classList.contains('show') ? '收起答案' : '查看答案';
+}
+function selectOption(el, uid) {
+    const container = document.getElementById(uid + '-opts');
+    container.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+}
+function toggleTag(el, uid) {
+    el.classList.toggle('selected');
+}
+function updateActiveSidebar() {
+    const sections = document.querySelectorAll('.slide[id]');
+    let current = '';
+    sections.forEach(s => {
+        const rect = s.getBoundingClientRect();
+        if (rect.top <= 100) current = s.id;
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+}
+window.addEventListener('scroll', updateActiveSidebar);
+function animateBars() {
+    document.querySelectorAll('.bar-fill').forEach(el => {
+        const w = el.style.width;
+        el.style.width = '0';
+        setTimeout(() => { el.style.width = w; }, 100);
+    });
+}
+window.addEventListener('load', animateBars);
+
+    // 音频播放器
+    let currentAudio = null;
+    let currentChapter = null;
+    let currentChapterIndex = -1;
+    
+    function initAudioPlayer() {
+        // 创建播放按钮
+        const player = document.createElement('button');
+        player.className = 'audio-player';
+        player.id = 'audioPlayer';
+        player.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+        `;
+        player.title = '播放当前章节音频';
+        
+        // 点击事件
+        player.addEventListener('click', toggleAudio);
+        
+        // 添加到页面
+        document.body.appendChild(player);
+        
+        // 监听滚动事件，确定当前章节
+        window.addEventListener('scroll', updateCurrentChapter);
+        updateCurrentChapter();
+    }
+    
+    function updateCurrentChapter() {
+        const sections = document.querySelectorAll('.slide');
+        let current = null;
+        let currentIndex = -1;
+        
+        sections.forEach((section, index) => {
+            const rect = section.getBoundingClientRect();
+            if (rect.top <= 200 && rect.bottom >= 200) {
+                current = section.id;
+                currentIndex = index;
+            }
+        });
+        
+        if (current && (current !== currentChapter || currentIndex !== currentChapterIndex)) {
+            currentChapter = current;
+            currentChapterIndex = currentIndex;
+            // 如果有音频在播放，暂停并切换
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+                updatePlayerUI(false);
+            }
+        }
+    }
+    
+    // 中英文章节名称对照表
+    const chapterNameMap = [
+        'cover',
+        'dba-role-boundary',
+        'dba-responsibilities',
+        'database-creation',
+        'database-creation-init',
+        'test-data-mgmt',
+        'test-data-generation',
+        'backup-recovery',
+        'backup-recovery-detail',
+        'schema-change',
+        'schema-change-detail',
+        'monitoring-inspection',
+        'monitoring-detail',
+        'practice',
+        'summary',
+        'homework'
+    ];
+    
+    function toggleAudio() {
+        if (currentAudio) {
+            // 暂停当前音频
+            currentAudio.pause();
+            currentAudio = null;
+            updatePlayerUI(false);
+        } else {
+            // 播放当前章节音频
+            if (!currentChapter || currentChapterIndex === -1) return;
+            
+            // 获取课程文件夹名称（从页面标题或默认）
+            const courseFolder = getCourseFolder();
+            // 使用英文名称映射
+            const englishName = chapterNameMap[currentChapterIndex] || currentChapter;
+            const audioFile = `Narrator/${courseFolder}/chapter_${String(currentChapterIndex + 1).padStart(3, '0')}_${englishName}.mp3`;
+            
+            currentAudio = new Audio(audioFile);
+            currentAudio.play().catch(e => {
+                console.error('播放失败:', e);
+                // 显示友好的错误提示
+                showAudioError(audioFile);
+            });
+            
+            currentAudio.addEventListener('ended', () => {
+                currentAudio = null;
+                updatePlayerUI(false);
+            });
+            
+            updatePlayerUI(true);
+        }
+    }
+    
+    function getCourseFolder() {
+        // 尝试从页面标题获取课程文件夹名称
+        const title = document.title;
+        // 这里可以根据需要自定义逻辑
+        // 默认使用页面标题的英文转换或固定名称
+        return '03-dba'; // 默认文件夹名
+    }
+    
+    function showAudioError(audioFile) {
+        // 创建错误提示
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: #ef4444;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            max-width: 300px;
+        `;
+        errorDiv.textContent = `音频文件不存在: ${audioFile}`;
+        document.body.appendChild(errorDiv);
+        
+        // 3秒后自动消失
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 3000);
+    }
+    
+    function updatePlayerUI(isPlaying) {
+        const player = document.getElementById('audioPlayer');
+        if (!player) return;
+        
+        if (isPlaying) {
+            player.classList.add('playing');
+            player.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+            `;
+            player.title = '暂停当前章节音频';
+        } else {
+            player.classList.remove('playing');
+            player.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            `;
+            player.title = '播放当前章节音频';
+        }
+    }
+    
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', initAudioPlayer);
+    
+</script>
+</body>
+</html>

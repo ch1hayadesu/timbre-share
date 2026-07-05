@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic数字团队-前端工程师</title>
+    <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: #0f172a; color: #e2e8f0; line-height: 1.7;
+}
+.sidebar {
+    position: fixed; left: 0; top: 0; width: 280px; height: 100vh;
+    background: #1e293b; border-right: 1px solid #334155;
+    overflow-y: auto; z-index: 100; padding: 20px 0;
+    transition: transform 0.3s ease;
+}
+.sidebar-header { padding: 10px 20px 20px; border-bottom: 1px solid #334155; margin-bottom: 10px; }
+.sidebar-header h2 { font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+.sidebar a {
+    display: block; padding: 10px 20px; color: #94a3b8; text-decoration: none;
+    font-size: 13px; transition: all 0.2s; border-left: 3px solid transparent;
+}
+.sidebar a:hover { background: #334155; color: #e2e8f0; }
+.sidebar a.active { background: rgba(99,102,241,0.1); color: #818cf8; border-left-color: #818cf8; }
+.sidebar a.chapter { font-weight: 600; color: #cbd5e1; margin-top: 8px; font-size: 14px; }
+.sidebar a.section { padding-left: 36px; font-size: 13px; }
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 2px; }
+.sidebar-toggle {
+    position: fixed; left: 280px; top: 20px; width: 28px; height: 28px;
+    background: #1e293b; border: 1px solid #334155; border-radius: 0 6px 6px 0;
+    color: #94a3b8; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; z-index: 101; transition: all 0.3s; font-size: 12px;
+}
+.sidebar-toggle:hover { background: #334155; color: #e2e8f0; }
+.sidebar.hidden { transform: translateX(-100%); }
+.sidebar.hidden + .sidebar-toggle { left: 0; }
+.sidebar.hidden ~ .main-content { margin-left: 0; }
+.main-content { margin-left: 280px; padding: 40px 60px; max-width: 1000px; transition: margin-left 0.3s ease; }
+.slide { min-height: 80vh; padding: 60px 0; border-bottom: 1px solid #1e293b; scroll-margin-top: 20px; }
+.slide:last-child { border-bottom: none; }
+.cover { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+.cover h1 { font-size: 48px; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; }
+.cover .subtitle { font-size: 20px; color: #94a3b8; margin-bottom: 30px; }
+.cover .meta { color: #64748b; font-size: 14px; }
+.cover-tags { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+.cover-tag { padding: 6px 16px; border-radius: 20px; font-size: 13px; background: rgba(129,140,248,0.15); color: #818cf8; border: 1px solid rgba(129,140,248,0.3); }
+.chapter-title { font-size: 36px; color: #818cf8; margin-bottom: 10px; }
+.chapter-subtitle { font-size: 18px; color: #64748b; margin-bottom: 40px; }
+h3 { font-size: 28px; color: #f1f5f9; margin-bottom: 30px; }
+h4 { font-size: 20px; color: #cbd5e1; margin: 30px 0 15px; }
+h5 { font-size: 16px; color: #cbd5e1; margin: 0 0 8px; }
+p { margin-bottom: 16px; color: #cbd5e1; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin: 20px 0; }
+.card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; transition: all 0.3s; }
+.card:hover { border-color: #818cf8; transform: translateY(-2px); }
+.card-icon { font-size: 28px; margin-bottom: 12px; }
+.card-title { font-size: 16px; font-weight: 600; color: #818cf8; margin-bottom: 10px; }
+.card p { font-size: 14px; color: #94a3b8; margin-bottom: 0; }
+.feature-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 20px 0; }
+.feature-item { background: #1e293b; border-radius: 10px; padding: 20px; border-left: 3px solid #818cf8; }
+.feature-item strong { color: #f1f5f9; display: block; margin-bottom: 8px; }
+.feature-item p { font-size: 14px; color: #94a3b8; margin: 0; }
+.flow-steps { display: flex; flex-direction: column; gap: 16px; margin: 20px 0; }
+.flow-step { display: flex; align-items: flex-start; gap: 16px; background: #1e293b; border-radius: 10px; padding: 20px; }
+.step-num { background: #818cf8; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+.role-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+.role-card { background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 12px; padding: 24px; border: 1px solid #334155; text-align: center; transition: all 0.3s; }
+.role-card:hover { border-color: #818cf8; transform: translateY(-2px); }
+.role-icon { font-size: 32px; margin-bottom: 12px; }
+.role-card h5 { color: #818cf8; }
+.role-card p { font-size: 13px; color: #94a3b8; margin: 0; }
+.compare-table { background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; margin: 20px 0; }
+.table-header { background: #0f172a; }
+.table-row { display: flex; border-top: 1px solid #334155; transition: background 0.2s; }
+.table-row:first-child { border-top: none; }
+.table-row:not(.table-header .table-row):hover { background: rgba(129,140,248,0.05); }
+.table-header .table-row { border-top: none; }
+.table-cell { flex: 1; padding: 14px 16px; font-size: 13px; color: #cbd5e1; }
+.table-header .table-cell { color: #818cf8; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+.table-row .table-cell:first-child { color: #f1f5f9; font-weight: 500; }
+.table-caption { font-size: 12px; color: #64748b; margin-top: 8px; text-align: center; }
+.bar-chart { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+.bar-row { display: flex; align-items: center; gap: 12px; }
+.bar-label { width: 120px; font-size: 13px; color: #94a3b8; text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; background: #1e293b; border-radius: 6px; height: 28px; position: relative; overflow: visible; display: flex; align-items: center; }
+.bar-fill { height: 100%; border-radius: 6px; transition: width 1s ease; min-width: 4px; }
+.bar-value { position: absolute; right: -48px; font-size: 13px; color: #94a3b8; white-space: nowrap; }
+.chart-container { margin: 20px 0; text-align: center; }
+.chart-title { font-size: 16px; color: #f1f5f9; margin-bottom: 12px; }
+.compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin: 20px 0; }
+.compare-card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; transition: all 0.3s; }
+.compare-card:hover { border-color: #818cf8; transform: translateY(-4px); }
+.compare-card.featured { border-color: #818cf8; background: linear-gradient(135deg, rgba(129,140,248,0.1), rgba(168,139,250,0.05)); }
+.compare-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.compare-icon { font-size: 24px; }
+.compare-header h5 { font-size: 18px; color: #f1f5f9; margin: 0; }
+.compare-desc p { font-size: 14px; color: #94a3b8; margin: 0 0 12px; }
+.compare-features { display: flex; flex-wrap: wrap; gap: 6px; }
+.feature-tag { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: rgba(74,222,128,0.15); color: #4ade80; }
+.code-wrapper { margin: 20px 0; }
+.code-caption { font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+.code-block { background: #0f172a; border-radius: 10px; padding: 20px; overflow-x: auto; border: 1px solid #334155; }
+.code-block code { font-family: 'Fira Code','Courier New', monospace; font-size: 13px; color: #e2e8f0; line-height: 1.8; white-space: pre; }
+.highlight-box { border-radius: 10px; padding: 16px 20px; margin: 16px 0; border: 1px solid; }
+.highlight-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.highlight-header strong { font-size: 14px; }
+.highlight-box p { font-size: 14px; margin: 0; }
+.highlight-indigo { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); }
+.highlight-indigo .highlight-header strong { color: #818cf8; }
+.highlight-green { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); }
+.highlight-green .highlight-header strong { color: #4ade80; }
+.highlight-amber { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); }
+.highlight-amber .highlight-header strong { color: #fbbf24; }
+.highlight-red { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); }
+.highlight-red .highlight-header strong { color: #f87171; }
+.image-placeholder { display: flex; gap: 16px; align-items: flex-start; background: #1e293b; border: 1px dashed #334155; border-radius: 12px; padding: 20px; margin: 20px 0; }
+.image-placeholder-icon { font-size: 32px; flex-shrink: 0; opacity: 0.5; }
+.image-placeholder-label { font-size: 12px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.image-placeholder-prompt { font-size: 13px; color: #94a3b8; font-style: italic; margin-bottom: 6px; }
+.image-placeholder-hint { font-size: 12px; color: #4ade80; opacity: 0.7; }
+.think-box { background: #1e293b; border-radius: 12px; padding: 24px; margin: 30px 0; border: 1px solid #334155; border-left: 4px solid #818cf8; }
+.think-title { display: inline-block; background: linear-gradient(135deg, #818cf8, #a78bfa); color: white; padding: 4px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.think-question { font-size: 16px; color: #f1f5f9; margin-bottom: 16px; font-weight: 500; }
+.think-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.option { background: rgba(99,102,241,0.1); padding: 12px 16px; border-radius: 8px; font-size: 14px; color: #cbd5e1; border: 1px solid rgba(99,102,241,0.2); cursor: pointer; transition: all 0.2s; user-select: none; }
+.option:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); }
+.option.selected { background: rgba(99,102,241,0.3); border-color: #818cf8; color: #f1f5f9; }
+.option.correct { background: rgba(74,222,128,0.2); border-color: #4ade80; color: #f1f5f9; }
+.option.wrong { background: rgba(239,68,68,0.15); border-color: #f87171; }
+.answer-toggle { background: linear-gradient(135deg, #818cf8, #a78bfa); color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s; margin-top: 4px; }
+.answer-toggle:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(129,140,248,0.4); }
+.answer-content { display: none; margin-top: 20px; padding: 20px; background: rgba(74,222,128,0.1); border-radius: 8px; border: 1px solid rgba(74,222,128,0.2); }
+.answer-content.show { display: block; }
+.answer-content p { font-size: 14px; color: #cbd5e1; margin-bottom: 8px; }
+.answer-content p:last-child { margin-bottom: 0; }
+.answer-content strong { color: #4ade80; }
+.answer-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tag-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.tag { padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; user-select: none; }
+.tag:hover { transform: translateY(-2px); }
+.tag.selected::before { content: "✓ "; }
+.tag-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border-color: rgba(59,130,246,0.3); }
+.tag-blue.selected { background: #3b82f6; color: white; border-color: #3b82f6; }
+.tag-purple { background: rgba(168,85,247,0.15); color: #c084fc; border-color: rgba(168,85,247,0.3); }
+.tag-purple.selected { background: #a855f7; color: white; border-color: #a855f7; }
+.tag-green { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
+.tag-green.selected { background: #22c55e; color: white; border-color: #22c55e; }
+.tag-amber { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+.tag-amber.selected { background: #f59e0b; color: white; border-color: #f59e0b; }
+.tag-cyan { background: rgba(6,182,212,0.15); color: #22d3ee; border-color: rgba(6,182,212,0.3); }
+.tag-cyan.selected { background: #06b6d4; color: white; border-color: #06b6d4; }
+.tag-pink { background: rgba(236,72,153,0.15); color: #f472b6; border-color: rgba(236,72,153,0.3); }
+.tag-pink.selected { background: #ec4899; color: white; border-color: #ec4899; }
+.tag-teal { background: rgba(20,184,166,0.15); color: #2dd4bf; border-color: rgba(20,184,166,0.3); }
+.tag-teal.selected { background: #14b8a6; color: white; border-color: #14b8a6; }
+.tag-orange { background: rgba(249,115,22,0.15); color: #fb923c; border-color: rgba(249,115,22,0.3); }
+.tag-orange.selected { background: #f97316; color: white; border-color: #f97316; }
+.practice-section { margin-top: 30px; }
+.practice-label { display: inline-block; background: linear-gradient(135deg, #4ade80, #22d3ee); color: #0f172a; padding: 6px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.resource-list { display: flex; flex-direction: column; gap: 12px; }
+.resource-item { display: flex; align-items: center; gap: 16px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 20px; text-decoration: none; transition: all 0.3s; cursor: pointer; }
+.resource-item:hover { border-color: #4ade80; background: rgba(74,222,128,0.05); transform: translateX(4px); }
+.resource-icon { font-size: 24px; flex-shrink: 0; }
+.resource-info { flex: 1; }
+.resource-name { font-size: 14px; font-weight: 600; color: #f1f5f9; margin-bottom: 4px; font-family: 'Courier New', monospace; }
+.resource-desc { font-size: 13px; color: #94a3b8; }
+.resource-arrow { color: #4ade80; font-size: 18px; flex-shrink: 0; opacity: 0; transition: all 0.3s; }
+.resource-item:hover .resource-arrow { opacity: 1; transform: translateX(4px); }
+.practice-steps { display: flex; flex-direction: column; gap: 16px; }
+.practice-step { display: flex; gap: 16px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+.practice-step-num { background: linear-gradient(135deg, #4ade80, #22d3ee); color: #0f172a; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; flex-shrink: 0; height: fit-content; }
+.practice-step-title { font-size: 16px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }
+.practice-step-desc { font-size: 14px; color: #94a3b8; line-height: 1.6; }
+.homework-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
+.homework-card { background: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; transition: all 0.3s; }
+.homework-card:hover { border-color: #818cf8; transform: translateY(-4px); }
+.homework-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.homework-num { background: linear-gradient(135deg, #818cf8, #a78bfa); color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+.homework-difficulty { display: flex; gap: 4px; }
+.diff-star { color: #fbbf24; font-size: 16px; }
+.diff-empty { color: #334155; font-size: 16px; }
+.homework-title { font-size: 20px; color: #f1f5f9; margin-bottom: 12px; }
+.homework-desc p { font-size: 14px; color: #94a3b8; margin: 0 0 16px; }
+.homework-requirements { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.req-title { font-size: 13px; font-weight: 600; color: #818cf8; margin-bottom: 12px; }
+.req-item { display: flex; gap: 10px; font-size: 13px; color: #cbd5e1; margin-bottom: 8px; }
+.output-label { background: rgba(74,222,128,0.15); color: #4ade80; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; margin-right: 8px; }
+.output-text { font-size: 13px; color: #94a3b8; }
+.ability-section { margin-bottom: 30px; }
+.section-label { display: inline-block; background: linear-gradient(135deg, #818cf8, #a78bfa); color: white; padding: 6px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.ability-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.ability-card { display: flex; gap: 16px; background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; transition: all 0.3s; }
+.ability-card:hover { border-color: #818cf8; transform: translateY(-2px); }
+.ability-icon { font-size: 32px; flex-shrink: 0; }
+.ability-name { font-size: 16px; font-weight: 600; color: #f1f5f9; margin-bottom: 6px; }
+.ability-desc { font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
+.ability-bar { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
+.ability-fill { height: 100%; background: linear-gradient(90deg, #818cf8, #a78bfa); border-radius: 3px; transition: width 1s ease; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin: 24px 0; }
+.summary-card { background: linear-gradient(135deg, rgba(129,140,248,0.1), rgba(168,139,250,0.05)); border: 1px solid rgba(129,140,248,0.2); border-radius: 12px; padding: 20px; text-align: center; }
+.summary-icon { font-size: 36px; margin-bottom: 12px; }
+.summary-label { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+.summary-value { font-size: 22px; font-weight: 700; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.summary-key-points { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+.summary-point { display: flex; align-items: flex-start; gap: 12px; background: #1e293b; border-radius: 8px; padding: 14px 16px; }
+.summary-point-icon { font-size: 18px; flex-shrink: 0; }
+.summary-point-text { font-size: 14px; color: #cbd5e1; }
+.ending { text-align: center; padding: 80px 0; }
+.ending h2 { font-size: 40px; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+.ending p { color: #64748b; }
+ul { list-style: none; padding: 0; }
+ul li { padding: 8px 0 8px 20px; position: relative; color: #cbd5e1; }
+ul li::before { content: "•"; color: #818cf8; position: absolute; left: 0; }
+.theme-toggle { position: fixed; right: 20px; top: 20px; width: 40px; height: 40px; background: #1e293b; border: 1px solid #334155; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 101; font-size: 18px; transition: all 0.3s; }
+.theme-toggle:hover { transform: scale(1.1); }
+body.light { background: #f8fafc; color: #1e293b; }
+body.light .sidebar { background: #fff; border-right-color: #e2e8f0; }
+body.light .sidebar-header h2 { color: #64748b; }
+body.light .sidebar a { color: #64748b; }
+body.light .sidebar a:hover { background: #f1f5f9; color: #1e293b; }
+body.light .sidebar a.active { background: rgba(99,102,241,0.1); color: #6366f1; border-left-color: #6366f1; }
+body.light .sidebar a.chapter { color: #334155; }
+body.light .sidebar-toggle { background: #fff; border-color: #e2e8f0; color: #64748b; }
+body.light .sidebar-toggle:hover { background: #f1f5f9; }
+body.light .theme-toggle { background: #fff; border-color: #e2e8f0; }
+body.light .cover h1 { background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+body.light .chapter-title { color: #6366f1; }
+body.light h3 { color: #0f172a; }
+body.light h4 { color: #334155; }
+body.light p { color: #475569; }
+body.light .card { background: #fff; border-color: #e2e8f0; }
+body.light .card-title { color: #6366f1; }
+body.light .card p { color: #64748b; }
+body.light .feature-item { background: #fff; border-left-color: #6366f1; }
+body.light .feature-item strong { color: #0f172a; }
+body.light .flow-step { background: #fff; }
+body.light .role-card { background: linear-gradient(135deg, #fff, #f8fafc); border-color: #e2e8f0; }
+body.light .role-card h5 { color: #6366f1; }
+body.light .compare-card { background: #fff; border-color: #e2e8f0; }
+body.light .compare-card.featured { border-color: #6366f1; }
+body.light .compare-header h5 { color: #0f172a; }
+body.light .compare-desc p { color: #64748b; }
+body.light .compare-table { background: #fff; border-color: #e2e8f0; }
+body.light .table-header { background: #f8fafc; }
+body.light .table-header .table-cell { color: #6366f1; }
+body.light .table-row { border-top-color: #e2e8f0; }
+body.light .table-cell { color: #475569; }
+body.light .table-row .table-cell:first-child { color: #0f172a; }
+body.light .code-block { background: #f8fafc; border-color: #e2e8f0; }
+body.light .code-block code { color: #334155; }
+body.light .think-box { background: #fff; border-color: #e2e8f0; border-left-color: #6366f1; }
+body.light .option { background: rgba(99,102,241,0.06); border-color: rgba(99,102,241,0.15); color: #475569; }
+body.light .option:hover { background: rgba(99,102,241,0.12); }
+body.light .option.selected { background: rgba(99,102,241,0.15); border-color: #6366f1; color: #0f172a; }
+body.light .resource-item { background: #fff; border-color: #e2e8f0; }
+body.light .resource-item:hover { border-color: #22c55e; }
+body.light .resource-name { color: #0f172a; }
+body.light .resource-desc { color: #64748b; }
+body.light .practice-step { background: #fff; border-color: #e2e8f0; }
+body.light .practice-step-title { color: #0f172a; }
+body.light .practice-step-desc { color: #64748b; }
+body.light .homework-card { background: #fff; border-color: #e2e8f0; }
+body.light .homework-card:hover { border-color: #6366f1; }
+body.light .homework-title { color: #0f172a; }
+body.light .homework-requirements { background: #f8fafc; }
+body.light .req-title { color: #6366f1; }
+body.light .req-item { color: #475569; }
+body.light .ability-card { background: #fff; border-color: #e2e8f0; }
+body.light .ability-name { color: #0f172a; }
+body.light .ability-bar { background: #e2e8f0; }
+body.light .summary-card { background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.03)); border-color: rgba(99,102,241,0.15); }
+body.light .summary-point { background: #fff; }
+body.light .image-placeholder { background: #fff; border-color: #e2e8f0; }
+body.light ul li { color: #475569; }
+body.light ul li::before { color: #6366f1; }
+@media (max-width: 900px) {
+    .sidebar { display: none; }
+    .sidebar-toggle { display: none; }
+    .main-content { margin-left: 0; padding: 20px; }
+    .homework-grid { grid-template-columns: 1fr; }
+    .ability-grid { grid-template-columns: 1fr; }
+}
+
+    /* 音频播放按钮 */
+    .audio-player {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #818cf8, #a78bfa);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: all 0.3s;
+    }
+    
+    .audio-player:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+    
+    .audio-player svg {
+        width: 24px;
+        height: 24px;
+        fill: white;
+    }
+    
+    .audio-player.playing {
+        background: linear-gradient(135deg, #ef4444, #f87171);
+    }
+    
+    .audio-player:disabled {
+        background: #64748b;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+</style>
+</head>
+<body>
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-header"><h2>Agentic数字团队-前端工程师</h2></div>
+<a href="#cover" class="chapter">🏠 课程封面</a>
+<a href="#前端工程师角色与工作流" class="chapter">第1章 前端工程师角色与工作流</a>
+<a href="#前端工程师角色与工作流" class="section">· 角色职责与团队协作</a>
+<a href="#UI设计与交互原型" class="chapter">第2章 UI设计与交互原型</a>
+<a href="#UI设计与交互原型" class="section">· UI设计与交互原型</a>
+<a href="#原型页面生成" class="chapter">第3章 原型页面生成</a>
+<a href="#原型页面生成" class="section">· 原型页面生成</a>
+<a href="#Mock数据与前端开发" class="chapter">第4章 Mock数据与前端开发</a>
+<a href="#Mock数据与前端开发" class="section">· Mock数据与前端开发</a>
+<a href="#组件化开发与工程化" class="chapter">第5章 组件化开发与工程化</a>
+<a href="#组件化开发与工程化" class="section">· 组件化开发与工程化</a>
+<a href="#前后端联调与部署" class="chapter">第6章 前后端联调与部署</a>
+<a href="#前后端联调与部署" class="section">· 前后端联调与部署</a>
+<a href="#practice" class="chapter">🛠️ 实践章节</a>
+<a href="#summary" class="chapter">📋 课程总结</a>
+<a href="#homework" class="chapter">📝 课程作业</a>
+</nav>
+<button class="sidebar-toggle" onclick="toggleSidebar()">◀</button>
+<button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+<main class="main-content">
+<section class="slide cover" id="cover">
+    <h1>Agentic数字团队-前端工程师</h1>
+    <p class="subtitle">AI驱动的UI设计、原型生成、交互开发与Mock数据全链路</p>
+    <p class="meta">👤 CodeBuddy团队 &nbsp;·&nbsp; ⏱ 2学时</p>
+    <div class="cover-tags"><span class="cover-tag">Agentic</span><span class="cover-tag">前端开发</span><span class="cover-tag">UI设计</span><span class="cover-tag">原型</span><span class="cover-tag">Mock数据</span><span class="cover-tag">Vue/React</span></div>
+</section>
+<section class="slide" id="前端工程师角色与工作流">
+    <div class="chapter-title">第1章 · 前端工程师角色与工作流</div>
+    <div class="chapter-subtitle">理解前端智能体的职责定位与全链路协作流程</div>
+    <div class="think-box" id="think-1">
+    <div class="think-title">🤔 思考一下</div>
+    <div class="think-question">在 Agentic 数字团队中，前端工程师智能体的工作流程包含哪两个关键阶段？</div>
+    <div class="think-options" id="think-1-opts"><div class="option" data-idx="0" onclick="selectOption(this, 'think-1')">A. 只做UI设计，开发交给后端</div><div class="option" data-idx="1" onclick="selectOption(this, 'think-1')">B. 原型阶段（HTML静态页面+Mock数据）→ 开发阶段（工程化前端项目+真实联调），原型用于需求确认</div><div class="option" data-idx="2" onclick="selectOption(this, 'think-1')">C. 直接写Vue/React代码，不需要原型</div><div class="option" data-idx="3" onclick="selectOption(this, 'think-1')">D. 只做Mock数据，UI交给设计师</div></div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-1')">查看答案</button>
+    <div class="answer-content" id="think-1-answer">
+        <p><strong>✅ 正确答案：B. 原型阶段（HTML静态页面+Mock数据）→ 开发阶段（工程化项目+真实联调）</strong></p>
+        <p>前端工程师智能体的工作严格分为两个阶段：先用HTML+CSS+Mock数据快速生成可交互的原型页面交付需求方确认，需求确认后再进入正式开发阶段搭建工程化前端项目。原型用于需求的快速验证和确认，避免开发完成后才发现需求理解偏差。两个阶段的代码产出互不混淆。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="前端工程师角色与工作流">
+    <h3>前端工程师智能体的职责范围</h3>
+    <p>在 Agentic 数字团队中，前端工程师智能体是用户体验的构建者。它连接视觉设计与技术实现，将产品需求转化为用户可交互的界面，贯穿从原型验证到工程化开发的全过程。</p>
+<div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));"><div class="card">
+    <div class="card-icon">🎨</div><div class="card-title">UI设计</div>
+    <p>根据需求文档和设计规范，生成页面布局、色彩方案、组件样式和视觉元素</p>
+</div><div class="card">
+    <div class="card-icon">📄</div><div class="card-title">原型页面生成</div>
+    <p>使用HTML+CSS+JS+Mock数据构建可交互原型，用于需求确认和用户验证</p>
+</div><div class="card">
+    <div class="card-icon">🖱️</div><div class="card-title">用户交互设计</div>
+    <p>设计页面间跳转逻辑、表单交互、反馈动画、状态变化等用户体验流程</p>
+</div><div class="card">
+    <div class="card-icon">⚛️</div><div class="card-title">前端开发</div>
+    <p>使用Vue/React工程化框架构建生产级代码，组件化开发、状态管理、路由配置</p>
+</div><div class="card">
+    <div class="card-icon">📦</div><div class="card-title">Mock数据</div>
+    <p>无后端时使用Mock数据驱动前端运行，模拟API接口和数据结构</p>
+</div><div class="card">
+    <div class="card-icon">🔗</div><div class="card-title">前后端联调</div>
+    <p>配合后端工程师完成API对接，处理跨域、鉴权、数据格式校验和异常处理</p>
+</div></div>
+<div class="image-placeholder">
+    <div class="image-placeholder-icon">🖼️</div>
+    <div class="image-placeholder-content">
+        <div class="image-placeholder-label">图片占位 · 文生图提示词</div>
+        <div class="image-placeholder-prompt">Two-phase workflow diagram: Phase 1 "Prototype" (HTML static pages + Mock data, for requirement confirmation) leading to Phase 2 "Development" (Vue/React project engineering, real API integration), connected by a "Requirement Approved" gate, modern tech illustration, dark background, indigo and teal gradients</div>
+        <div class="image-placeholder-hint">集成文生图接口后，将根据上方提示词自动替换为实际图片</div>
+    </div>
+</div>
+<div class="compare-table"><div class="table-header"><div class="table-row"><div class="table-cell">对比维度</div><div class="table-cell">原型阶段</div><div class="table-cell">开发阶段</div></div></div><div class="table-body"><div class="table-row"><div class="table-cell">目的</div><div class="table-cell">需求确认与验证</div><div class="table-cell">生产级功能交付</div></div><div class="table-row"><div class="table-cell">技术选型</div><div class="table-cell">纯HTML+CSS+JS（单页静态）</div><div class="table-cell">Vue/React + 工程化工具链</div></div><div class="table-row"><div class="table-cell">数据来源</div><div class="table-cell">Mock数据（硬编码 / JSON文件）</div><div class="table-cell">Mock数据 → 真实API过渡</div></div><div class="table-row"><div class="table-cell">代码复用</div><div class="table-cell">否，原型代码不进入生产</div><div class="table-cell">是，按组件规范开发</div></div><div class="table-row"><div class="table-cell">交付物</div><div class="table-cell">HTML文件（直接浏览器打开）</div><div class="table-cell">构建产物 / 源码仓库</div></div><div class="table-row"><div class="table-cell">参与方</div><div class="table-cell">需求方 + 前端确认</div><div class="table-cell">前端 + 后端 + 测试</div></div></div></div><p class="table-caption">原型阶段与开发阶段的对比</p>
+</section>
+<section class="slide" id="UI设计与交互原型">
+    <div class="chapter-title">第2章 · UI设计与交互原型</div>
+    <div class="chapter-subtitle">从需求到视觉方案，设计符合用户体验的界面</div>
+    <div class="think-box" id="think-2">
+    <div class="think-title">🏷️ 选择与本章相关的概念</div>
+    <div class="think-question">前端工程师智能体进行UI设计时，需要考虑哪些核心要素？（选出所有正确项）</div>
+    <div class="tag-container" id="think-2-tags"><span class="tag tag-blue" onclick="toggleTag(this, 'think-2')">设计规范一致性</span><span class="tag tag-purple" onclick="toggleTag(this, 'think-2')">响应式布局适配</span><span class="tag tag-green" onclick="toggleTag(this, 'think-2')">交互反馈与状态</span><span class="tag tag-amber" onclick="toggleTag(this, 'think-2')">数据库表结构</span></div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-2')">查看答案</button>
+    <div class="answer-content" id="think-2-answer">
+        <p><strong>正确选项：设计规范一致性、响应式布局适配、交互反馈与状态</strong></p>
+        <div class="answer-tags"><span class="tag tag-green">设计规范一致性</span><span class="tag tag-green">响应式布局适配</span><span class="tag tag-green">交互反馈与状态</span></div>
+        <p style="margin-top:12px">数据库表结构属于后端/架构师的职责范畴。UI设计阶段关注的是用户看到的和交互的：统一的组件风格、在不同屏幕尺寸下的布局适配、以及按钮点击/加载中/空状态/错误状态等交互反馈。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="UI设计与交互原型">
+    <h3>UI设计与交互原型</h3>
+    <p>UI设计是前端开发的起点。前端工程师智能体根据PRD需求文档和设计规范，自动生成页面布局方案、交互流程和视觉原型。设计过程中遵循一致性、可用性和可访问性三大原则。</p>
+<div class="flow-steps"><div class="flow-step">
+    <div class="step-num">1</div>
+    <div>
+        <h5>需求解析</h5>
+        <p>读取PRD/需求文档，提取页面结构、功能模块、用户操作流程和核心交互场景</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">2</div>
+    <div>
+        <h5>设计规范应用</h5>
+        <p>应用统一的色彩体系（主色/辅助色）、排版层级（字号/字重）、间距体系、圆角/阴影规范</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">3</div>
+    <div>
+        <h5>页面布局设计</h5>
+        <p>使用Flexbox/Grid系统划分页面区域（导航/内容/侧栏/页脚），设计响应式断点方案</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">4</div>
+    <div>
+        <h5>交互流程梳理</h5>
+        <p>绘制页面流转图：定义页面间跳转关系、弹窗触发条件、表单校验规则、操作反馈动画</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">5</div>
+    <div>
+        <h5>组件拆分</h5>
+        <p>将页面拆分为可复用的UI组件（按钮/表单/卡片/表格/弹窗），定义组件Props和状态</p>
+    </div>
+</div></div>
+<div class="code-wrapper">
+    <div class="code-caption">AI生成的UI设计规范示例（电商管理系统）</div>
+    <pre class="code-block"><code class="lang-markdown"># UI设计规范 - 电商管理系统
+
+## 色彩体系
+- 主色: #6366f1 (Indigo) — 品牌色、主按钮、链接
+- 成功: #22c55e — 订单完成、支付成功
+- 警告: #f59e0b — 库存不足、待处理事项
+- 错误: #ef4444 — 订单取消、表单校验失败
+- 背景: #f8fafc (浅色) / #0f172a (深色)
+- 文本: #1e293b → #94a3b8 (主→次级)
+
+## 排版层级
+- H1: 24px Bold     — 页面标题
+- H2: 20px Bold     — 模块标题
+- H3: 16px Semibold — 卡片标题
+- Body: 14px Regular — 正文内容
+- Caption: 12px     — 辅助说明
+
+## 间距体系 (4px 基准)
+- xs: 4px  | sm: 8px  | md: 16px
+- lg: 24px | xl: 32px | xxl: 48px
+
+## 圆角与阴影
+- 卡片: border-radius: 12px, shadow-sm
+- 按钮: border-radius: 8px
+- 输入框: border-radius: 6px
+- 弹窗: border-radius: 16px, shadow-lg
+
+## 响应式断点
+- 移动端: < 768px (单列布局)
+- 平板: 768px - 1024px (双列)
+- 桌面: > 1024px (多列网格)</code></pre>
+</div>
+<div class="highlight-box highlight-indigo">
+    <div class="highlight-header"><span>💡</span><strong>AI UI设计最佳提示词</strong></div>
+    <p>「根据以下PRD需求文档，为{项目名}生成完整的UI设计规范：包括色彩体系、排版层级、间距体系、组件样式和响应式断点方案。参考主流设计系统（Ant Design / Element Plus）的规范风格。」</p>
+</div>
+</section>
+<section class="slide" id="原型页面生成">
+    <div class="chapter-title">第3章 · 原型页面生成</div>
+    <div class="chapter-subtitle">用HTML+CSS+Mock数据快速构建可交互原型，用于需求确认</div>
+    <div class="think-box" id="think-3">
+    <div class="think-title">🤔 思考一下</div>
+    <div class="think-question">为什么原型阶段必须使用HTML静态页面，而不是直接用Vue/React框架？</div>
+    <div class="think-options" id="think-3-opts"><div class="option" data-idx="0" onclick="selectOption(this, 'think-3')">A. Vue/React代码无法在浏览器直接运行</div><div class="option" data-idx="1" onclick="selectOption(this, 'think-3')">B. 原型阶段的目标是快速验证需求和交互流程，纯HTML无需构建工具链、无依赖安装、双击即可打开浏览，适合非技术人员参与评审</div><div class="option" data-idx="2" onclick="selectOption(this, 'think-3')">C. HTML不能实现复杂交互</div><div class="option" data-idx="3" onclick="selectOption(this, 'think-3')">D. 原型代码必须复用为生产代码</div></div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-3')">查看答案</button>
+    <div class="answer-content" id="think-3-answer">
+        <p><strong>✅ 正确答案：B. 纯HTML无需构建工具链、无依赖安装、双击即可打开浏览</strong></p>
+        <p>原型阶段的核心目标是「快速验证」，不是「工程化交付」。纯HTML+CSS+JS文件零依赖、零构建、零配置，产品经理/需求方/客户可以直接通过浏览器打开查看，无需安装Node.js或启动开发服务器。原型页面中的交互（弹窗/切换/表单填写）使用原生JS实现，Mock数据直接嵌入或通过JSON文件加载。原型验收通过后，原型代码即完成使命，不会进入生产。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="原型页面生成">
+    <h3>原型页面生成</h3>
+    <p>原型是需求沟通的桥梁。前端工程师智能体根据UI设计规范和交互流程，使用纯前端技术栈快速生成可交互、可点击的静态原型页面，在正式开发前完成需求的逐项确认。</p>
+<div class="compare-grid"><div class="compare-card ">
+    <div class="compare-header">
+        <span class="compare-icon">📄</span>
+        <h5>线框图（Wireframe）</h5>
+    </div>
+    <div class="compare-desc"><p>低保真原型</p></div>
+    <div class="compare-features"><span class="feature-tag">黑白灰为主，关注布局结构</span><span class="feature-tag">占位内容，快速产出</span><span class="feature-tag">适合早期需求讨论</span><span class="feature-tag">确认页面结构和信息层级</span></div>
+</div><div class="compare-card featured">
+    <div class="compare-header">
+        <span class="compare-icon">🎨</span>
+        <h5>高保真原型</h5>
+    </div>
+    <div class="compare-desc"><p>接近最终产品的可交互原型</p></div>
+    <div class="compare-features"><span class="feature-tag">完整色彩、图标、图片和真实文本</span><span class="feature-tag">Mock数据驱动，页面间可点击跳转</span><span class="feature-tag">模拟表单校验、弹窗、加载状态</span><span class="feature-tag">需求确认通过后直接进入开发</span></div>
+</div></div>
+<div class="code-wrapper">
+    <div class="code-caption">AI生成的高保真原型页面示例（电商商品列表页，纯HTML+Mock数据）</div>
+    <pre class="code-block"><code class="lang-html">&lt;!-- 原型页面：商品列表页（双击打开即可浏览） --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;title&gt;商品管理 - 原型&lt;/title&gt;
+  &lt;style&gt;
+    /* 原型阶段：所有样式内联，零依赖 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, 'PingFang SC', sans-serif;
+           background: #f5f5f5; padding: 24px; }
+    .header { display: flex; justify-content: space-between;
+              align-items: center; margin-bottom: 24px; }
+    .header h1 { font-size: 24px; color: #1a1a1a; }
+    .btn-primary { background: #6366f1; color: white;
+                   border: none; padding: 10px 20px;
+                   border-radius: 8px; cursor: pointer; }
+    .search-bar { display: flex; gap: 12px; margin-bottom: 20px; }
+    .search-bar input { flex: 1; padding: 10px 16px;
+                         border: 1px solid #e0e0e0;
+                         border-radius: 8px; font-size: 14px; }
+    .product-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+                    gap: 16px; }
+    .product-card { background: white; border-radius: 12px;
+                    padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    cursor: pointer; transition: transform 0.2s; }
+    .product-card:hover { transform: translateY(-4px); }
+    .product-image { height: 160px; background: #f0f0f0;
+                     border-radius: 8px; margin-bottom: 12px;
+                     display: flex; align-items: center;
+                     justify-content: center; color: #999; }
+    .product-name { font-size: 14px; font-weight: 600;
+                    color: #1a1a1a; margin-bottom: 6px; }
+    .product-price { color: #ef4444; font-size: 18px;
+                     font-weight: 700; }
+    .product-stock { font-size: 12px; color: #999; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div class="header"&gt;
+    &lt;h1&gt;商品管理&lt;/h1&gt;
+    &lt;button class="btn-primary" onclick="alert('原型交互：新增商品弹窗')"&gt;
+      + 新增商品
+    &lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="search-bar"&gt;
+    &lt;input placeholder="搜索商品名称/ID..."&gt;
+    &lt;button class="btn-primary" onclick="alert('原型交互：搜索过滤')"&gt;
+      搜索
+    &lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="product-grid" id="productGrid"&gt;
+    &lt;!-- Mock数据由JS动态渲染 --&gt;
+  &lt;/div&gt;
+  &lt;script&gt;
+    // Mock数据：嵌入原型直接运行
+    const mockProducts = [
+      { id: 1, name: '苹果手机 iPhone 15 Pro', price: 8999, stock: 128,
+        category: '数码' },
+      { id: 2, name: '机械键盘 K8 Pro',        price: 599,  stock: 56,
+        category: '配件' },
+      { id: 3, name: '4K显示器 27寸',          price: 2499, stock: 23,
+        category: '数码' },
+      { id: 4, name: '无线鼠标 MX Master 3S',  price: 799,  stock: 89,
+        category: '配件' },
+      { id: 5, name: '笔记本电脑 MacBook Air',  price: 9499, stock: 12,
+        category: '数码' },
+      { id: 6, name: 'USB-C 扩展坞',           price: 299,  stock: 200,
+        category: '配件' },
+      { id: 7, name: '降噪耳机 AirPods Pro',    price: 1899, stock: 45,
+        category: '数码' },
+      { id: 8, name: '显示器支架',             price: 159,  stock: 0,
+        category: '配件' }
+    ];
+    // 渲染商品卡片
+    function renderProducts() {
+      const grid = document.getElementById('productGrid');
+      grid.innerHTML = mockProducts.map(p =&gt; `
+        &lt;div class="product-card" onclick="alert('查看商品详情 #${p.id}')"&gt;
+          &lt;div class="product-image"&gt;📷 ${p.name}&lt;/div&gt;
+          &lt;div class="product-name"&gt;${p.name}&lt;/div&gt;
+          &lt;div class="product-price"&gt;¥${p.price.toLocaleString()}&lt;/div&gt;
+          &lt;div class="product-stock"&gt;
+            ${p.stock &gt; 0 ? `库存: ${p.stock}` : '&lt;span style="color:red"&gt;缺货&lt;/span&gt;'}
+          &lt;/div&gt;
+        &lt;/div&gt;
+      `).join('');
+    }
+    renderProducts();
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+</div>
+<div class="highlight-box highlight-amber">
+    <div class="highlight-header"><span>⚠️</span><strong>原型开发要点</strong></div>
+    <p>①原型使用纯HTML/CSS/JS，零构建依赖 ②Mock数据直接嵌入JS或通过JSON文件加载 ③交互使用原生JS实现（click/toggle/alert）④原型代码不作为生产代码使用，不要考虑工程化（组件化/路由/状态管理）⑤原型产物为独立的.html文件，可直接双击在浏览器中打开</p>
+</div>
+</section>
+<section class="slide" id="Mock数据与前端开发">
+    <div class="chapter-title">第4章 · Mock数据与前端开发</div>
+    <div class="chapter-subtitle">使用Mock数据驱动前端开发，无后端也能完整运行</div>
+    <div class="think-box" id="think-4">
+    <div class="think-title">💬 思考与讨论</div>
+    <div class="think-question">前端开发阶段，后端接口尚未就绪。前端工程师智能体应该如何设计Mock数据方案，使得从Mock到真实API的切换尽可能平滑？</div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-4')">查看参考答案</button>
+    <div class="answer-content" id="think-4-answer">
+        <p><strong>推荐策略：</strong>①采用接口模拟层（Request Layer）设计——将所有API调用封装在一个独立的service模块中，Mock数据和真实API共用一个接口签名（相同的入参/出参类型）。②开发时通过配置开关切换数据源：`const USE_MOCK = true`，切换为false即对接真实API。③Mock数据使用Mock.js生成随机但符合Schema的仿真数据，非硬编码。④Mock数据的格式、字段类型必须与后端定义的接口文档（OpenAPI/Swagger）完全一致。⑤切换到真实API时只需修改配置文件，无需改动业务组件代码。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="Mock数据与前端开发">
+    <h3>Mock数据与前端开发</h3>
+    <p>Mock数据是前端独立开发的基石。前端工程师智能体根据接口文档自动生成Mock数据层，使前端项目在无后端服务的情况下也能完整运行和调试。</p>
+<div class="feature-list"><div class="feature-item">
+    <strong>接口模拟层（Service Layer）</strong>
+    <p>将API请求封装在service模块中，Mock和真实API使用相同的函数签名和返回类型，通过配置一键切换</p>
+</div><div class="feature-item">
+    <strong>智能Mock数据生成</strong>
+    <p>AI根据接口Schema自动生成符合数据类型的仿真数据，支持嵌套对象、数组、枚举值和边界值覆盖</p>
+</div><div class="feature-item">
+    <strong>动态响应模拟</strong>
+    <p>模拟网络延迟、错误响应、分页数据、Token过期等真实场景，提前处理前端异常逻辑</p>
+</div><div class="feature-item">
+    <strong>CRUD全流程模拟</strong>
+    <p>Mock数据支持增删改查操作（内存操作），前端可以完整演示数据的新增、编辑、删除和查询</p>
+</div><div class="feature-item">
+    <strong>渐进式切换策略</strong>
+    <p>支持按接口粒度切换到真实API——已完成的接口对接真实后端，未完成的继续使用Mock</p>
+</div><div class="feature-item">
+    <strong>数据状态保持</strong>
+    <p>Mock数据存储在内存中，页面刷新后可重置或保持状态，支持多页面交互数据传递</p>
+</div></div>
+<div class="code-wrapper">
+    <div class="code-caption">AI生成的Mock Service层（Vue项目示例：Mock ↔ 真实API一键切换）</div>
+    <pre class="code-block"><code class="lang-javascript">// ============================================
+// service/product.js — 接口模拟层
+// 同一套接口签名，支持 Mock / 真实API 一键切换
+// ============================================
+
+import request from '@/utils/request';
+
+// 开发开关：true=使用Mock数据，false=对接真实API
+const USE_MOCK = true;
+
+// ---------- Mock 数据处理 ----------
+const mockProducts = [
+  { id: 1, name: '苹果手机', price: 8999, stock: 128,
+    status: '上架', createdAt: '2024-01-15' },
+  { id: 2, name: '机械键盘', price: 599,  stock: 56,
+    status: '上架', createdAt: '2024-02-20' },
+];
+
+// 模拟网络延迟
+const delay = (ms = 300) => new Promise(r =&gt; setTimeout(r, ms));
+
+// ---------- 接口：商品列表 ----------
+export async function getProductList(params) {
+  if (USE_MOCK) {
+    await delay(500);
+    // 模拟分页和搜索过滤
+    let filtered = [...mockProducts];
+    if (params?.keyword) {
+      filtered = filtered.filter(p =&gt;
+        p.name.includes(params.keyword)
+      );
+    }
+    return {
+      code: 200,
+      data: { list: filtered, total: filtered.length }
+    };
+  }
+  // 真实API调用（签名完全一致）
+  return request.get('/api/products', { params });
+}
+
+// ---------- 接口：新增商品 ----------
+export async function createProduct(data) {
+  if (USE_MOCK) {
+    await delay(300);
+    const newProduct = { ...data, id: Date.now(), createdAt: new Date() };
+    mockProducts.unshift(newProduct);
+    return { code: 200, data: newProduct, message: '创建成功' };
+  }
+  return request.post('/api/products', data);
+}
+
+// ---------- 接口：删除商品 ----------
+export async function deleteProduct(id) {
+  if (USE_MOCK) {
+    await delay(200);
+    const idx = mockProducts.findIndex(p =&gt; p.id === id);
+    if (idx &gt; -1) mockProducts.splice(idx, 1);
+    return { code: 200, message: '删除成功' };
+  }
+  return request.delete(`/api/products/${id}`);
+}
+
+// ---------- 切换为真实API：修改 USE_MOCK = false ----------</code></pre>
+</div>
+<div class="highlight-box highlight-green">
+    <div class="highlight-header"><span>🚀</span><strong>Mock驱动开发最佳实践</strong></div>
+    <p>①定义统一的API响应格式 `{ code, data, message }`，Mock与真实API保持一致 ②使用Mock.js生成随机但格式正确的数据，避免硬编码导致后期接口变化时大量修改 ③Mock数据覆盖正常响应、空数据、错误响应、超时四种场景 ④前端开发时以Mock数据为主，联调时将开关逐接口切换到真实API ⑤Mock Service层与业务组件解耦，切换数据源不影响UI代码</p>
+</div>
+</section>
+<section class="slide" id="组件化开发与工程化">
+    <div class="chapter-title">第5章 · 组件化开发与工程化</div>
+    <div class="chapter-subtitle">构建可维护、可复用的前端工程化项目</div>
+    <div class="think-box" id="think-5">
+    <div class="think-title">💬 思考与讨论</div>
+    <div class="think-question">原型阶段生成的是独立的HTML静态页面，进入开发阶段后为什么要转为Vue/React组件化架构？直接基于原型代码开发不行吗？</div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-5')">查看参考答案</button>
+    <div class="answer-content" id="think-5-answer">
+        <p><strong>答案：不行的原因如下：</strong></p>
+        <p>①原型代码是单体HTML，所有样式和逻辑都在一个文件中，无法支撑大型应用的维护需求。②Vue/React提供组件化机制，将UI拆分为独立可复用的组件（如ProductCard、SearchBar、Pagination），修改一处影响全局。③工程化工具链（Vite/Webpack）提供模块热更新（HMR）、代码分割（Code Splitting）、Tree Shaking等功能，大幅提升开发体验和运行性能。④状态管理（Pinia/Vuex/Redux）解决跨组件数据共享问题，原型阶段完全不需要。⑤可维护性差异巨大：原型是「一次性验证工具」，工程化项目是「长期迭代的产品」。</p>
+        <p>正确的做法：原型只作为需求确认的参照物，开发阶段根据设计规范从头构建组件化工程。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="组件化开发与工程化">
+    <h3>组件化开发与工程化</h3>
+    <p>工程化是生产级前端的基石。前端工程师智能体从零搭建Vue/React项目，按照组件化、模块化、规范化的原则组织代码，确保项目可维护、可测试、可扩展。</p>
+<div class="flow-steps"><div class="flow-step">
+    <div class="step-num">1</div>
+    <div>
+        <h5>项目脚手架</h5>
+        <p>使用Vite/Create React App初始化项目，配置TypeScript、ESLint、Prettier、路径别名</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">2</div>
+    <div>
+        <h5>组件树设计</h5>
+        <p>按页面区域拆分组件：布局组件（Header/Sidebar/Footer）、业务组件（ProductCard/OrderTable）、通用组件（Button/Modal/Pagination）</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">3</div>
+    <div>
+        <h5>状态管理</h5>
+        <p>设计全局状态（用户信息/购物车/主题）与局部状态（表单数据/弹窗显隐）的分层管理方案</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">4</div>
+    <div>
+        <h5>路由与权限</h5>
+        <p>配置前端路由（Vue Router/React Router），设计导航守卫和权限校验（角色/菜单/按钮级）</p>
+    </div>
+</div><div class="flow-step">
+    <div class="step-num">5</div>
+    <div>
+        <h5>构建与部署</h5>
+        <p>配置生产构建优化（代码压缩/CSS提取/CDN路径/环境变量），输出CI/CD部署产物</p>
+    </div>
+</div></div>
+<div class="code-wrapper">
+    <div class="code-caption">Vue 3组件化代码示例（基于原型的商品卡片组件）</div>
+    <pre class="code-block"><code class="lang-vue">&lt;!-- 开发阶段：组件化重构 ProductCard.vue --&gt;
+&lt;template&gt;
+  &lt;div class="product-card" :class="{ 'is-out-of-stock': product.stock === 0 }"
+       @click="$emit('click', product.id)"&gt;
+    &lt;div class="product-image"&gt;
+      &lt;img :src="product.image" :alt="product.name" /&gt;
+      &lt;span v-if="product.stock === 0" class="out-of-stock-badge"&gt;缺货&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class="product-info"&gt;
+      &lt;h3 class="product-name"&gt;{{ product.name }}&lt;/h3&gt;
+      &lt;p class="product-desc"&gt;{{ product.description }}&lt;/p&gt;
+      &lt;div class="product-meta"&gt;
+        &lt;span class="product-price"&gt;¥{{ formatPrice(product.price) }}&lt;/span&gt;
+        &lt;span class="product-stock"&gt;
+          已售 {{ product.soldCount }} / 库存 {{ product.stock }}
+        &lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineProps({
+  product: { type: Object, required: true }
+});
+defineEmits(['click']);
+const formatPrice = (price) =&gt; price.toLocaleString('zh-CN');
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.product-card {
+  background: var(--card-bg);
+  border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--border-color);
+  cursor: pointer; transition: all 0.3s;
+}
+.product-card:hover { transform: translateY(-4px);
+                     box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+/* scoped样式确保组件隔离，不会污染全局 */
+&lt;/style&gt;</code></pre>
+</div>
+<div class="highlight-box highlight-indigo">
+    <div class="highlight-header"><span>📦</span><strong>工程化项目目录规范</strong></div>
+    <p><code>src/api/</code> — 接口层（Mock ↔ 真实API Service） | <code>src/components/</code> — 通用UI组件 | <code>src/views/</code> — 页面级组件 | <code>src/stores/</code> — 状态管理 | <code>src/router/</code> — 路由配置 | <code>src/utils/</code> — 工具函数 | <code>src/mock/</code> — Mock数据定义 | <code>src/assets/</code> — 静态资源</p>
+</div>
+</section>
+<section class="slide" id="前后端联调与部署">
+    <div class="chapter-title">第6章 · 前后端联调与部署</div>
+    <div class="chapter-subtitle">从Mock切换到真实API，完成前后端全链路贯通</div>
+    <div class="think-box" id="think-6">
+    <div class="think-title">🏷️ 选择与本章相关的概念</div>
+    <div class="think-question">前后端联调时，前端工程师智能体需要关注哪些关键事项？（选出所有正确项）</div>
+    <div class="tag-container" id="think-6-tags"><span class="tag tag-blue" onclick="toggleTag(this, 'think-6')">跨域配置（CORS）</span><span class="tag tag-purple" onclick="toggleTag(this, 'think-6')">接口响应数据结构一致性</span><span class="tag tag-green" onclick="toggleTag(this, 'think-6')">Token鉴权与刷新机制</span><span class="tag tag-amber" onclick="toggleTag(this, 'think-6')">数据库索引设计</span></div>
+    <button class="answer-toggle" onclick="toggleAnswer('think-6')">查看答案</button>
+    <div class="answer-content" id="think-6-answer">
+        <p><strong>正确选项：跨域配置、接口数据结构一致性、Token鉴权与刷新机制</strong></p>
+        <div class="answer-tags"><span class="tag tag-green">跨域配置（CORS）</span><span class="tag tag-green">接口响应数据结构一致性</span><span class="tag tag-green">Token鉴权与刷新机制</span></div>
+        <p style="margin-top:12px">数据库索引设计是后端/架构师的职责。联调阶段前端关注的是：跨域问题是否已在代理或后端配置、真实API返回的数据结构是否与Mock约定一致（字段名/类型/嵌套层级）、鉴权Token的获取/传递/刷新机制是否正常工作。</p>
+    </div>
+</div>
+</section>
+<section class="slide" id="前后端联调与部署">
+    <h3>前后端联调与部署</h3>
+    <p>联调是前端开发的收尾阶段。前端工程师智能体将Mock数据源切换到真实API，逐个接口验证数据请求和响应，处理跨域、鉴权、异常等边界情况，确保前后端全链路贯通。</p>
+<div class="compare-table"><div class="table-header"><div class="table-row"><div class="table-cell">联调阶段</div><div class="table-cell">工作内容</div><div class="table-cell">常见问题</div><div class="table-cell">AI处理策略</div></div></div><div class="table-body"><div class="table-row"><div class="table-cell">环境准备</div><div class="table-cell">配置代理转发、设置API Base URL</div><div class="table-cell">跨域/CORS配置缺失</div><div class="table-cell">自动检测代理配置并提示修正</div></div><div class="table-row"><div class="table-cell">接口验证</div><div class="table-cell">逐接口切换Mock→真实API</div><div class="table-cell">字段名不一致、类型不匹配</div><div class="table-cell">对比Mock与真实响应，差异高亮</div></div><div class="table-row"><div class="table-cell">鉴权联调</div><div class="table-cell">对接登录/Token/权限体系</div><div class="table-cell">Token过期、无权限、刷新失败</div><div class="table-cell">自动配置请求拦截器和响应拦截器</div></div><div class="table-row"><div class="table-cell">异常处理</div><div class="table-cell">测试超时/网络断开/服务错误</div><div class="table-cell">前端未处理错误状态、白屏</div><div class="table-cell">自动补充错误边界和降级UI</div></div><div class="table-row"><div class="table-cell">上线部署</div><div class="table-cell">构建产物、CI/CD、部署验证</div><div class="table-cell">构建失败、环境变量缺失</div><div class="table-cell">自动检查构建配置和环境变量</div></div></div></div><p class="table-caption">前后端联调各阶段工作内容</p>
+<div class="code-wrapper">
+    <div class="code-caption">AI生成的联调配置与请求拦截器（Vue项目）</div>
+    <pre class="code-block"><code class="lang-javascript">// ============================================
+// utils/request.js — 统一请求封装
+// 自动处理跨域、鉴权、Token刷新、错误拦截
+// ============================================
+
+import axios from 'axios';
+import { ElMessage } from 'element-plus';
+
+const service = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' }
+});
+
+// 请求拦截器：自动携带Token
+service.interceptors.request.use(
+  (config) =&gt; {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) =&gt; Promise.reject(error)
+);
+
+// 响应拦截器：统一错误处理 + Token自动刷新
+service.interceptors.response.use(
+  (response) =&gt; {
+    const { code, data, message } = response.data;
+    if (code === 200) return data;
+    if (code === 401) {
+      // Token过期 — 尝试刷新
+      return refreshToken().then(() =&gt; {
+        return service(response.config); // 重试原请求
+      }).catch(() =&gt; {
+        localStorage.clear();
+        window.location.href = '/login';
+      });
+    }
+    ElMessage.error(message || '请求失败');
+    return Promise.reject(new Error(message));
+  },
+  (error) =&gt; {
+    if (error.code === 'ECONNABORTED') {
+      ElMessage.error('请求超时，请检查网络');
+    } else if (!error.response) {
+      ElMessage.error('网络连接失败');
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default service;</code></pre>
+</div>
+<div class="highlight-box highlight-green">
+    <div class="highlight-header"><span>🔗</span><strong>联调检查清单</strong></div>
+    <p>①确认CORS已配置（开发代理/后端允许跨域）②逐接口验证响应数据结构是否与文档一致 ③测试Token过期后自动刷新流程 ④验证所有异常场景（超时/500/网络断开）有对应的UI反馈 ⑤确认构建产物能正常部署到目标环境 ⑥删除所有Mock数据引用和console.log</p>
+</div>
+</section>
+
+<section class="slide" id="practice">
+    <div class="chapter-title">🛠️ 实战项目：电商管理后台前端全流程</div>
+    <div class="chapter-subtitle">使用CodeBuddy前端工程师智能体，为一个电商管理后台完成从原型到开发的全链路实践。</div>
+    <div class="practice-section">
+        <div class="practice-label">🔢 实践步骤</div>
+        <div class="practice-steps"><div class="practice-step">
+    <div class="practice-step-num">STEP 1</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 1：UI设计与规范定义</div>
+        <div class="practice-step-desc">根据电商管理后台的需求文档，设计完整的UI设计规范（色彩/排版/间距/组件风格/响应式断点）。</div>
+    </div>
+</div>
+<div class="practice-step">
+    <div class="practice-step-num">STEP 2</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 2：生成高保真原型页面</div>
+        <div class="practice-step-desc">使用HTML+CSS+JS+Mock数据，生成商品列表页、商品详情页、新增商品表单三个原型页面，双击可在浏览器中打开交互。</div>
+    </div>
+</div>
+<div class="practice-step">
+    <div class="practice-step-num">STEP 3</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 3：搭建Vue工程化项目</div>
+        <div class="practice-step-desc">初始化Vite+Vue 3项目，配置TypeScript/ESLint/路径别名，按照规范目录结构组织代码。</div>
+    </div>
+</div>
+<div class="practice-step">
+    <div class="practice-step-num">STEP 4</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 4：Mock Service层实现</div>
+        <div class="practice-step-desc">定义接口模拟层（Service Layer），实现商品CRUD的Mock数据接口，支持一键切换为真实API。</div>
+    </div>
+</div>
+<div class="practice-step">
+    <div class="practice-step-num">STEP 5</div>
+    <div class="practice-step-content">
+        <div class="practice-step-title">Step 5：联调与部署</div>
+        <div class="practice-step-desc">配置代理和请求拦截器，将Mock切换为真实后端API，完成全链路验证并构建部署。</div>
+    </div>
+</div>
+</div>
+    </div>
+</section>
+<section class="slide" id="summary">
+    <div class="chapter-title">📋 课程总结</div>
+    <div class="summary-grid"><div class="summary-card">
+    <div class="summary-icon">🎨</div>
+    <div class="summary-label">工作阶段</div>
+    <div class="summary-value">2阶段</div>
+</div>
+<div class="summary-card">
+    <div class="summary-icon">🤖</div>
+    <div class="summary-label">AI自动化率</div>
+    <div class="summary-value">80%+</div>
+</div>
+<div class="summary-card">
+    <div class="summary-icon">⚡</div>
+    <div class="summary-label">原型产出提速</div>
+    <div class="summary-value">10倍</div>
+</div>
+<div class="summary-card">
+    <div class="summary-icon">📦</div>
+    <div class="summary-label">Mock覆盖率</div>
+    <div class="summary-value">100%</div>
+</div>
+<div class="summary-card">
+    <div class="summary-icon">🔧</div>
+    <div class="summary-label">技术栈</div>
+    <div class="summary-value">6项</div>
+</div>
+</div>
+    <h4>核心知识点回顾</h4>
+    <div class="summary-key-points"><div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">前端智能体工作分两个独立阶段：原型阶段（HTML静态页面+Mock数据）→ 开发阶段（工程化项目+真实API）</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">原型用于需求确认，使用纯HTML/CSS/JS零依赖实现，双击浏览器打开即可交互</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">原型代码不作为生产代码使用，开发阶段基于设计规范重新构建组件化工程</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">通过Service接口模拟层实现Mock与真实API的解耦切换，前端可独立于后端完整运行</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">Mock数据使用统一的响应格式 `{code, data, message}`，覆盖正常/空数据/错误/超时四种场景</div>
+</div>
+<div class="summary-point">
+    <span class="summary-point-icon">✅</span>
+    <div class="summary-point-text">联调阶段关注跨域CORS、数据结构一致性、Token鉴权刷新、异常处理边界四核心</div>
+</div>
+</div>
+</section>
+<section class="slide" id="homework">
+    <div class="chapter-title">📝 课程作业</div>
+    <div class="chapter-subtitle">完成以下作业以巩固所学知识</div>
+    <div class="homework-grid"><div class="homework-card">
+    <div class="homework-header">
+        <div class="homework-num">作业 01</div>
+        <div class="homework-difficulty"><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-empty">★</span><span class="diff-empty">★</span><span class="diff-empty">★</span></div>
+    </div>
+    <div class="homework-title">作业一：高保真原型页面</div>
+    <div class="homework-desc"><p>为「用户管理系统」设计并生成高保真原型页面，包含列表页和新增表单页</p></div>
+    <div class="homework-requirements">
+        <div class="req-title">📋 具体要求</div>
+        <div class="req-item"><span class="req-icon">▸</span>使用纯HTML+CSS+JS生成用户列表页（包含搜索过滤、分页、状态标签）</div><div class="req-item"><span class="req-icon">▸</span>生成新增用户表单页（表单校验：手机号格式、邮箱格式、必填项校验）</div><div class="req-item"><span class="req-icon">▸</span>Mock数据至少包含10条用户记录（姓名/手机号/邮箱/角色/状态/注册时间）</div><div class="req-item"><span class="req-icon">▸</span>页面间可通点击跳转，双击HTML文件即可运行</div><div class="req-item"><span class="req-icon">▸</span>包含至少一种交互反馈（弹窗确认/状态切换/加载动画）</div>
+    </div>
+    <div><span class="output-label">交付物</span><span class="output-text">独立HTML文件 + Mock数据说明文档</span></div>
+</div>
+<div class="homework-card">
+    <div class="homework-header">
+        <div class="homework-num">作业 02</div>
+        <div class="homework-difficulty"><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-empty">★</span><span class="diff-empty">★</span></div>
+    </div>
+    <div class="homework-title">作业二：Mock Service层设计</div>
+    <div class="homework-desc"><p>为电商订单系统的订单列表设计完整的Mock数据接口层</p></div>
+    <div class="homework-requirements">
+        <div class="req-title">📋 具体要求</div>
+        <div class="req-item"><span class="req-icon">▸</span>基于接口文档定义Mock Service层（至少包含列表查询、详情、状态更新三个接口）</div><div class="req-item"><span class="req-icon">▸</span>统一响应格式 `{code, data, message}`</div><div class="req-item"><span class="req-icon">▸</span>Mock数据支持模拟分页、搜索、排序</div><div class="req-item"><span class="req-icon">▸</span>模拟网络延迟（300-800ms随机延迟）</div><div class="req-item"><span class="req-icon">▸</span>支持一键切换 Mock/真实API（USE_MOCK 开关）</div>
+    </div>
+    <div><span class="output-label">交付物</span><span class="output-text">Mock Service JS文件 + 接口文档说明</span></div>
+</div>
+<div class="homework-card">
+    <div class="homework-header">
+        <div class="homework-num">作业 03</div>
+        <div class="homework-difficulty"><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-star">★</span><span class="diff-empty">★</span></div>
+    </div>
+    <div class="homework-title">作业三：工程化项目搭建</div>
+    <div class="homework-desc"><p>根据原型设计，将用户管理系统重构为Vue 3组件化工程</p></div>
+    <div class="homework-requirements">
+        <div class="req-title">📋 具体要求</div>
+        <div class="req-item"><span class="req-icon">▸</span>使用Vite初始化Vue 3 + TypeScript项目</div><div class="req-item"><span class="req-icon">▸</span>至少拆分为5个组件（布局/用户列表/搜索栏/表单弹窗/分页）</div><div class="req-item"><span class="req-icon">▸</span>配置路由（列表页/新增页/编辑页）和导航守卫</div><div class="req-item"><span class="req-icon">▸</span>集成Mock Service层（接口模拟层，非硬编码）</div><div class="req-item"><span class="req-icon">▸</span>包含错误边界处理和加载状态展示</div>
+    </div>
+    <div><span class="output-label">交付物</span><span class="output-text">Git仓库源码（含README运行说明）</span></div>
+</div>
+</div>
+    <div class="ending">
+        <h2>好的前端，始于原型，成于工程</h2>
+        <p>完成本课程后，你将掌握AI驱动的前端全链路开发核心技能。</p>
+    </div>
+</section>
+</main>
+<script>
+function toggleSidebar() {
+    const sb = document.querySelector('.sidebar');
+    const btn = document.querySelector('.sidebar-toggle');
+    sb.classList.toggle('hidden');
+    btn.textContent = sb.classList.contains('hidden') ? '▶' : '◀';
+}
+function toggleTheme() {
+    document.body.classList.toggle('light');
+    const btn = document.querySelector('.theme-toggle');
+    btn.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+}
+function toggleAnswer(id) {
+    const el = document.getElementById(id + '-answer');
+    el.classList.toggle('show');
+    const btn = el.previousElementSibling;
+    btn.textContent = el.classList.contains('show') ? '收起答案' : '查看答案';
+}
+function selectOption(el, uid) {
+    const container = document.getElementById(uid + '-opts');
+    container.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+}
+function toggleTag(el, uid) {
+    el.classList.toggle('selected');
+}
+function updateActiveSidebar() {
+    const sections = document.querySelectorAll('.slide[id]');
+    let current = '';
+    sections.forEach(s => {
+        const rect = s.getBoundingClientRect();
+        if (rect.top <= 100) current = s.id;
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+}
+window.addEventListener('scroll', updateActiveSidebar);
+function animateBars() {
+    document.querySelectorAll('.bar-fill').forEach(el => {
+        const w = el.style.width;
+        el.style.width = '0';
+        setTimeout(() => { el.style.width = w; }, 100);
+    });
+}
+window.addEventListener('load', animateBars);
+
+    // 音频播放器
+    let currentAudio = null;
+    let currentChapter = null;
+    let currentChapterIndex = -1;
+    
+    function initAudioPlayer() {
+        // 创建播放按钮
+        const player = document.createElement('button');
+        player.className = 'audio-player';
+        player.id = 'audioPlayer';
+        player.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+        `;
+        player.title = '播放当前章节音频';
+        
+        // 点击事件
+        player.addEventListener('click', toggleAudio);
+        
+        // 添加到页面
+        document.body.appendChild(player);
+        
+        // 监听滚动事件，确定当前章节
+        window.addEventListener('scroll', updateCurrentChapter);
+        updateCurrentChapter();
+    }
+    
+    function updateCurrentChapter() {
+        const sections = document.querySelectorAll('.slide');
+        let current = null;
+        let currentIndex = -1;
+        
+        sections.forEach((section, index) => {
+            const rect = section.getBoundingClientRect();
+            if (rect.top <= 200 && rect.bottom >= 200) {
+                current = section.id;
+                currentIndex = index;
+            }
+        });
+        
+        if (current && (current !== currentChapter || currentIndex !== currentChapterIndex)) {
+            currentChapter = current;
+            currentChapterIndex = currentIndex;
+            // 如果有音频在播放，暂停并切换
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+                updatePlayerUI(false);
+            }
+        }
+    }
+    
+    // 中英文章节名称对照表
+    const chapterNameMap = [
+        'cover',
+        'frontend-role-workflow',
+        'frontend-responsibilities',
+        'ui-design-prototype',
+        'ui-design-detail',
+        'prototype-generation',
+        'prototype-types',
+        'mock-data-development',
+        'mock-data-detail',
+        'component-development',
+        'component-detail',
+        'integration-deployment',
+        'integration-detail',
+        'practice',
+        'summary',
+        'homework'
+    ];
+    
+    function toggleAudio() {
+        if (currentAudio) {
+            // 暂停当前音频
+            currentAudio.pause();
+            currentAudio = null;
+            updatePlayerUI(false);
+        } else {
+            // 播放当前章节音频
+            if (!currentChapter || currentChapterIndex === -1) return;
+            
+            // 获取课程文件夹名称（从页面标题或默认）
+            const courseFolder = getCourseFolder();
+            // 使用英文名称映射
+            const englishName = chapterNameMap[currentChapterIndex] || currentChapter;
+            const audioFile = `Narrator/${courseFolder}/chapter_${String(currentChapterIndex + 1).padStart(3, '0')}_${englishName}.mp3`;
+            
+            currentAudio = new Audio(audioFile);
+            currentAudio.play().catch(e => {
+                console.error('播放失败:', e);
+                // 显示友好的错误提示
+                showAudioError(audioFile);
+            });
+            
+            currentAudio.addEventListener('ended', () => {
+                currentAudio = null;
+                updatePlayerUI(false);
+            });
+            
+            updatePlayerUI(true);
+        }
+    }
+    
+    function getCourseFolder() {
+        // 尝试从页面标题获取课程文件夹名称
+        const title = document.title;
+        // 这里可以根据需要自定义逻辑
+        // 默认使用页面标题的英文转换或固定名称
+        return '04-frontend'; // 默认文件夹名
+    }
+    
+    function showAudioError(audioFile) {
+        // 创建错误提示
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: #ef4444;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            max-width: 300px;
+        `;
+        errorDiv.textContent = `音频文件不存在: ${audioFile}`;
+        document.body.appendChild(errorDiv);
+        
+        // 3秒后自动消失
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 3000);
+    }
+    
+    function updatePlayerUI(isPlaying) {
+        const player = document.getElementById('audioPlayer');
+        if (!player) return;
+        
+        if (isPlaying) {
+            player.classList.add('playing');
+            player.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+            `;
+            player.title = '暂停当前章节音频';
+        } else {
+            player.classList.remove('playing');
+            player.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            `;
+            player.title = '播放当前章节音频';
+        }
+    }
+    
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', initAudioPlayer);
+    
+</script>
+</body>
+</html>

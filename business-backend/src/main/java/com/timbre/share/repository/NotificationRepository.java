@@ -1,0 +1,18 @@
+package com.timbre.share.repository;
+
+import com.timbre.share.entity.Notification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+
+public interface NotificationRepository extends JpaRepository<Notification, Long> {
+    Page<Notification> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
+    long countByUserIdAndIsReadFalse(Long userId);
+
+    @Modifying
+    @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = ?1 AND n.isRead = false")
+    void markAllReadByUserId(Long userId);
+}
