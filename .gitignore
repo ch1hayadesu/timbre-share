@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite3
+
+# Uploads (keep structure, ignore files)
+.uploads/*
+
+# Logs
+*.log
+logs/
+
+# Audio/Model artifacts (keep directory, ignore large files)
+**/*.wav
+**/*.mp3
+**/*.pth
+**/*.onnx
+!**/static/samples/*.wav
