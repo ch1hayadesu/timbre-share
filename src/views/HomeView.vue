@@ -55,7 +55,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in mockSynthesis" :key="item.id">
+          <tr v-for="item in synthesisList.items" :key="item.id">
             <td class="text-cell">{{ item.text }}</td>
             <td>{{ item.voice }}</td>
             <td class="param-cell">{{ item.params }}</td>
@@ -80,37 +80,59 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import Card from '@/components/Card.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import VoiceCard from './VoiceCard.vue'
-import { mockVoices, mockSynthesis } from '@/data/mock'
+import { getVoiceList, getSynthesisList, getDashboardStats } from '@/services'
+import { useToast } from '@/composables/useToast'
 
-const recentVoices = computed(() => mockVoices.slice(0, 4))
+const { showToast } = useToast()
 
-const stats = [
+const recentVoices = ref([])
+const synthesisList = reactive({ items: [] })
+const dashboardStats = ref({ voiceCount: 0, synthesisCount: 0, scriptCount: 0, downloadCount: 0 })
+
+async function loadData() {
+  try {
+    const [voiceResult, synthResult, stats] = await Promise.all([
+      getVoiceList({ page: 1, pageSize: 4 }),
+      getSynthesisList({ page: 1, pageSize: 5 }),
+      getDashboardStats(),
+    ])
+    recentVoices.value = voiceResult.items
+    synthesisList.items = synthResult.items
+    dashboardStats.value = stats
+  } catch (err) {
+    showToast('error', '加载工作台数据失败：' + err.message)
+  }
+}
+
+onMounted(() => loadData())
+
+const stats = computed(() => [
   {
-    label: '我的音色', value: '12',
+    label: '我的音色', value: String(dashboardStats.value.voiceCount),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
     color: 'purple', change: '↑ 较上月 +3', changeType: 'up'
   },
   {
-    label: '合成次数', value: '47',
+    label: '合成次数', value: String(dashboardStats.value.synthesisCount),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
     color: 'green', change: '↑ 较上月 +12', changeType: 'up'
   },
   {
-    label: '剧本配音', value: '8',
+    label: '剧本配音', value: String(dashboardStats.value.scriptCount),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
     color: 'blue', change: '↑ 较上月 +5', changeType: 'up'
   },
   {
-    label: '下载音色', value: '5',
+    label: '下载音色', value: String(dashboardStats.value.downloadCount),
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
     color: 'amber', change: '↑ 较上月 +2', changeType: 'up'
   },
-]
+])
 
 const quickActions = [
   {

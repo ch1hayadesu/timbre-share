@@ -25,7 +25,7 @@ import WaveAnimation from '@/components/WaveAnimation.vue'
 import BaseTag from '@/components/BaseTag.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import BaseButton from '@/components/BaseButton.vue'
-import { statusMap, sourceMap } from '@/data/mock'
+import { statusMap, sourceMap } from '@/services'
 
 const props = defineProps({
   voice: { type: Object, required: true },

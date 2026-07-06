@@ -63,7 +63,7 @@ import StepIndicator from '@/components/StepIndicator.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import AiLoading from '@/components/AiLoading.vue'
 import AudioPlayer from '@/components/AudioPlayer.vue'
-import { mockVoices } from '@/data/mock'
+import { createVoice } from '@/services'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
@@ -124,18 +124,18 @@ function updateSteps(step) {
   currentStep.value = step
 }
 
-function saveResult() {
-  mockVoices.unshift({
-    id: mockVoices.length + 1,
-    name: cloneName.value,
-    source: 'cloned',
-    status: 'ready',
-    mode: '即时克隆',
-    date: new Date().toISOString().split('T')[0],
-    downloads: 0
-  })
-  showToast('success', `音色「${cloneName.value}」已保存！`)
-  setTimeout(() => router.push('/voices'), 1000)
+async function saveResult() {
+  try {
+    await createVoice({
+      name: cloneName.value,
+      source: 'cloned',
+      mode: '即时克隆',
+    })
+    showToast('success', `音色「${cloneName.value}」已保存！`)
+    setTimeout(() => router.push('/voices'), 1000)
+  } catch (err) {
+    showToast('error', '保存失败：' + err.message)
+  }
 }
 
 function resetClone() {

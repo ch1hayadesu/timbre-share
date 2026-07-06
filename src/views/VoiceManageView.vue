@@ -29,8 +29,8 @@
     </div>
 
     <div class="voice-grid">
-      <template v-if="filteredVoices.length">
-        <VoiceCard v-for="voice in filteredVoices" :key="voice.id" :voice="voice"
+      <template v-if="voiceList.items.length">
+        <VoiceCard v-for="voice in voiceList.items" :key="voice.id" :voice="voice"
           @detail="openDetail" @action="handleAction" />
       </template>
       <EmptyState v-else icon="🎤" title="没有找到匹配的音色" desc="试试调整筛选条件或克隆新的音色"
@@ -38,19 +38,19 @@
     </div>
 
     <div class="pagination">
-      <BaseButton size="sm" disabled>上一页</BaseButton>
-      <span class="page-info">第 1 页 / 共 2 页</span>
-      <BaseButton size="sm">下一页</BaseButton>
+      <BaseButton size="sm" :disabled="voiceList.page <= 1" @click="page--; loadVoices()">上一页</BaseButton>
+      <span class="page-info">第 {{ voiceList.page }} 页 / 共 {{ Math.ceil(voiceList.total / voiceList.pageSize) || 1 }} 页</span>
+      <BaseButton size="sm" :disabled="voiceList.page >= Math.ceil(voiceList.total / voiceList.pageSize)" @click="page++; loadVoices()">下一页</BaseButton>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import BaseButton from '@/components/BaseButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import VoiceCard from './VoiceCard.vue'
-import { mockVoices, statusMap, sourceMap } from '@/data/mock'
+import { getVoiceList, getVoiceDetail, shareVoice, deleteVoice, statusMap, sourceMap } from '@/services'
 import { useModal } from '@/composables/useModal'
 import { useDrawer } from '@/composables/useDrawer'
 import { useToast } from '@/composables/useToast'
@@ -62,20 +62,45 @@ const { showToast } = useToast()
 const filter = ref('')
 const source = ref('all')
 const status = ref('all')
+const page = ref(1)
+const pageSize = ref(6)
 
-const filteredVoices = computed(() => {
-  let voices = mockVoices
-  if (filter.value) voices = voices.filter(v => v.name.includes(filter.value))
-  if (source.value !== 'all') voices = voices.filter(v => v.source === source.value)
-  if (status.value !== 'all') voices = voices.filter(v => v.status === status.value)
-  return voices
-})
+// 从 Service 加载的数据
+const voiceList = reactive({ items: [], total: 0, page: 1, pageSize: 6 })
+const loading = ref(false)
 
-function applyFilters() { /* computed automatically tracks */ }
+async function loadVoices() {
+  loading.value = true
+  try {
+    const params = {
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: filter.value || undefined,
+      source: source.value !== 'all' ? source.value : undefined,
+      status: status.value !== 'all' ? status.value : undefined,
+    }
+    const result = await getVoiceList(params)
+    voiceList.items = result.items
+    voiceList.total = result.total
+    voiceList.page = result.page
+    voiceList.pageSize = result.pageSize
+  } catch (err) {
+    showToast('error', '加载音色列表失败：' + err.message)
+  } finally {
+    loading.value = false
+  }
+}
 
-function openDetail(id) {
-  const v = mockVoices.find(v => v.id === id)
-  if (!v) return
+onMounted(() => loadVoices())
+
+function applyFilters() {
+  page.value = 1
+  loadVoices()
+}
+
+async function openDetail(id) {
+  const v = await getVoiceDetail(id)
+  if (!v) { showToast('warning', '音色不存在'); return }
   const content = `
     <div style="text-align:center;margin-bottom:24px;">
       <div style="height:100px;background:var(--gradient-card);border-radius:var(--radius-lg);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:3px;overflow:hidden;">
@@ -118,15 +143,24 @@ function openDetail(id) {
 function handleAction({ type, voice }) {
   if (type === 'preview') showToast('info', '试听功能演示中')
   else if (type === 'share') {
-    showModal('分享音色到平台', '<p style="font-size:14px;">确定要将该音色分享到公共平台吗？分享后其他用户可下载使用。</p>', () => {
-      voice.status = 'shared'
-      showToast('success', '音色已成功分享到平台！')
+    showModal('分享音色到平台', '<p style="font-size:14px;">确定要将该音色分享到公共平台吗？分享后其他用户可下载使用。</p>', async () => {
+      try {
+        await shareVoice(voice.id)
+        showToast('success', '音色已成功分享到平台！')
+        loadVoices()
+      } catch (err) {
+        showToast('error', '分享失败：' + err.message)
+      }
     }, '确认分享')
   } else if (type === 'delete') {
-    showModal('删除音色', '<p style="font-size:14px;color:var(--color-error);">此操作不可撤销，确定要删除该音色吗？</p>', () => {
-      const idx = mockVoices.findIndex(v => v.id === voice.id)
-      if (idx > -1) mockVoices.splice(idx, 1)
-      showToast('success', '音色已删除')
+    showModal('删除音色', '<p style="font-size:14px;color:var(--color-error);">此操作不可撤销，确定要删除该音色吗？</p>', async () => {
+      try {
+        await deleteVoice(voice.id)
+        showToast('success', '音色已删除')
+        loadVoices()
+      } catch (err) {
+        showToast('error', '删除失败：' + err.message)
+      }
     }, '确认删除', true)
   }
 }

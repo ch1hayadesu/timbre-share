@@ -19,7 +19,7 @@
     </div>
 
     <div class="market-grid">
-      <div v-for="voice in filteredVoices" :key="voice.id" class="market-card card-clickable" @click="openDetail(voice)">
+      <div v-for="voice in marketList.items" :key="voice.id" class="market-card card-clickable" @click="openDetail(voice)">
         <WaveAnimation />
         <div class="market-card-body">
           <div class="market-card-name">{{ voice.name }}</div>
@@ -37,18 +37,18 @@
     </div>
 
     <div class="pagination">
-      <BaseButton size="sm" disabled>上一页</BaseButton>
-      <span class="page-info">第 1 页 / 共 1 页</span>
-      <BaseButton size="sm" disabled>下一页</BaseButton>
+      <BaseButton size="sm" :disabled="marketList.page <= 1" @click="page--">上一页</BaseButton>
+      <span class="page-info">第 {{ marketList.page }} 页 / 共 {{ Math.ceil(marketList.total / marketList.pageSize) || 1 }} 页</span>
+      <BaseButton size="sm" :disabled="marketList.page >= Math.ceil(marketList.total / marketList.pageSize)" @click="page++">下一页</BaseButton>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import BaseButton from '@/components/BaseButton.vue'
 import WaveAnimation from '@/components/WaveAnimation.vue'
-import { mockMarketVoices, mockVoices } from '@/data/mock'
+import { getMarketVoiceList, downloadMarketVoice } from '@/services'
 import { useModal } from '@/composables/useModal'
 import { useToast } from '@/composables/useToast'
 
@@ -57,12 +57,38 @@ const { showToast } = useToast()
 
 const filter = ref('')
 const sort = ref('newest')
+const page = ref(1)
+const pageSize = ref(6)
 
-const filteredVoices = computed(() => {
-  let voices = [...mockMarketVoices]
-  if (filter.value) voices = voices.filter(v => v.name.includes(filter.value))
-  if (sort.value === 'popular') voices.sort((a, b) => b.downloads - a.downloads)
-  return voices
+const marketList = reactive({ items: [], total: 0, page: 1, pageSize: 6 })
+const loading = ref(false)
+
+async function loadMarketVoices() {
+  loading.value = true
+  try {
+    const params = {
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: filter.value || undefined,
+      sort: sort.value,
+    }
+    const result = await getMarketVoiceList(params)
+    marketList.items = result.items
+    marketList.total = result.total
+    marketList.page = result.page
+    marketList.pageSize = result.pageSize
+  } catch (err) {
+    showToast('error', '加载市场列表失败：' + err.message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => loadMarketVoices())
+
+watch([filter, sort], () => {
+  page.value = 1
+  loadMarketVoices()
 })
 
 function openDetail(voice) {
@@ -89,20 +115,15 @@ function openDetail(voice) {
   showModal(voice.name, content, () => download(voice), '下载到我的语音库')
 }
 
-function download(voice) {
+async function download(voice) {
   showToast('info', `正在下载「${voice.name}」...`)
-  setTimeout(() => {
-    mockVoices.push({
-      id: mockVoices.length + 1,
-      name: voice.name,
-      source: 'shared',
-      status: 'ready',
-      mode: '下载',
-      date: new Date().toISOString().split('T')[0],
-      downloads: 0
-    })
+  try {
+    await downloadMarketVoice(voice.id)
     showToast('success', `「${voice.name}」已下载到你的语音库！`)
-  }, 1500)
+    loadMarketVoices()
+  } catch (err) {
+    showToast('error', '下载失败：' + err.message)
+  }
 }
 </script>
 

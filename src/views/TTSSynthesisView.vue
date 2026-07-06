@@ -78,12 +78,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Card from '@/components/Card.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseTag from '@/components/BaseTag.vue'
 import AudioPlayer from '@/components/AudioPlayer.vue'
-import { ttsVoiceOptions } from '@/data/mock'
+import { getTTSVoiceOptions, createSynthesis } from '@/services'
 import { useToast } from '@/composables/useToast'
 
 const { showToast } = useToast()
@@ -95,18 +95,45 @@ const ttsVolume = ref(80)
 const ttsPitch = ref(0)
 const showResult = ref(false)
 
+// 从 Service 加载音色选项
+const ttsVoiceOptions = ref([])
+
+async function loadVoiceOptions() {
+  try {
+    ttsVoiceOptions.value = await getTTSVoiceOptions()
+    if (ttsVoiceOptions.value.length > 0) {
+      selectedVoice.value = ttsVoiceOptions.value[0].value
+    }
+  } catch (err) {
+    showToast('error', '加载音色选项失败：' + err.message)
+  }
+}
+
+onMounted(() => loadVoiceOptions())
+
 const charCount = computed(() => ttsText.value.length)
 
 function updateCharCount() { /* computed auto */ }
 
-function synthesize() {
+async function synthesize() {
   if (!ttsText.value.trim()) { showToast('warning', '请输入合成文本'); return }
   if (ttsText.value.length > 1000) { showToast('error', '文本超过1000字限制'); return }
   showToast('info', '正在合成语音...')
-  setTimeout(() => {
+
+  try {
+    const voiceOption = ttsVoiceOptions.value.find(v => v.value === selectedVoice.value)
+    const voiceName = voiceOption ? voiceOption.label : '未知音色'
+    await createSynthesis({
+      text: ttsText.value,
+      voice: voiceName,
+      params: `语速${ttsSpeed.value}x 音量${ttsVolume.value}% 音调${ttsPitch.value}`,
+      status: 'success',
+    })
     showResult.value = true
     showToast('success', 'TTS合成完成！')
-  }, 2000)
+  } catch (err) {
+    showToast('error', '合成失败：' + err.message)
+  }
 }
 </script>
 
