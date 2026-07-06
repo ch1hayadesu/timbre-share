@@ -21,10 +21,10 @@ def send_code(req: PhoneRequest, db: Session = Depends(get_db)):
 def login(req: VerifyCodeRequest, db: Session = Depends(get_db)):
     svc = UserService(db)
     result = svc.login(req.phone, req.code)
-    return ApiResponse.success(result.model_dump())
+    return ApiResponse.success(result.model_dump(mode='json'))
 
 
 @router.get("/profile")
 def get_profile(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     svc = UserService(db)
-    return ApiResponse.success(svc.get_profile(user_id).model_dump())
+    return ApiResponse.success(svc.get_profile(user_id).model_dump(mode='json'))

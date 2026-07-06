@@ -1,6 +1,8 @@
 import asyncio
+from pathlib import Path
 
 from app.celery_app import celery_app
+from app.config import settings
 from app.database import SessionLocal
 from app.repositories.tts_repo import TtsRepo
 from app.repositories.voice_repo import VoiceRepo
@@ -31,13 +33,15 @@ def synthesize_tts(self, record_id: int, text: str, voice_id: int,
         voice_name = VOICE_MAP.get(voice_id, "zh-CN-XiaoxiaoNeural")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        audio_path = loop.run_until_complete(
+        abs_path = loop.run_until_complete(
             engine.synthesize(text, voice_name, speed, volume, pitch)
         )
         loop.close()
 
-        tts_repo.update_audio(record_id, audio_path)
-        return {"record_id": record_id, "audio_path": audio_path}
+        audio_dir = Path(settings.data_dir, "audio")
+        rel_path = Path(abs_path).relative_to(audio_dir).as_posix()
+        tts_repo.update_audio(record_id, rel_path)
+        return {"record_id": record_id, "audio_path": rel_path}
 
     except Exception as exc:
         db.rollback()

@@ -24,7 +24,7 @@ def create_task(
         charset=req.charset,
         voice_mapping=req.voice_mapping,
     )
-    return ApiResponse.success(result.model_dump())
+    return ApiResponse.success(result.model_dump(mode='json'))
 
 
 @router.get("/list")
@@ -36,7 +36,7 @@ def list_tasks(
 ):
     svc = ScriptDubService(db)
     items, total = svc.list_tasks(user_id, page, page_size)
-    return ApiResponse.paginated([t.model_dump() for t in items], total, page, page_size)
+    return ApiResponse.paginated([t.model_dump(mode='json') for t in items], total, page, page_size)
 
 
 @router.get("/detail/{task_id}")
@@ -46,4 +46,4 @@ def get_task(
     db: Session = Depends(get_db),
 ):
     svc = ScriptDubService(db)
-    return ApiResponse.success(svc.get_task(task_id, user_id).model_dump())
+    return ApiResponse.success(svc.get_task(task_id, user_id).model_dump(mode='json'))

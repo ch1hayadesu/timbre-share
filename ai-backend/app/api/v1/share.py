@@ -19,7 +19,7 @@ def share_voice(
 ):
     svc = ShareService(db)
     result = svc.share_voice(voice_id, user_id, req.tags)
-    return ApiResponse.success(result.model_dump())
+    return ApiResponse.success(result.model_dump(mode='json'))
 
 
 @router.post("/unpublish/{voice_id}")
@@ -42,7 +42,7 @@ def list_public(
 ):
     svc = ShareService(db)
     items, total = svc.list_public(keyword, page, page_size)
-    return ApiResponse.paginated([s.model_dump() for s in items], total, page, page_size)
+    return ApiResponse.paginated([s.model_dump(mode='json') for s in items], total, page, page_size)
 
 
 @router.post("/download/{share_id}")
@@ -53,7 +53,7 @@ def download_voice(
 ):
     svc = ShareService(db)
     result = svc.download_voice(share_id, user_id)
-    return ApiResponse.success(result.model_dump())
+    return ApiResponse.success(result.model_dump(mode='json'))
 
 
 @router.get("/my-downloads")
@@ -65,4 +65,4 @@ def list_downloads(
 ):
     svc = ShareService(db)
     items, total = svc.list_downloads(user_id, page, page_size)
-    return ApiResponse.paginated([v.model_dump() for v in items], total, page, page_size)
+    return ApiResponse.paginated([v.model_dump(mode='json') for v in items], total, page, page_size)

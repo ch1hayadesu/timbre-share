@@ -18,7 +18,7 @@ def synthesize(
 ):
     svc = TtsService(db)
     result = svc.synthesize(user_id, req)
-    return ApiResponse.success(result.model_dump())
+    return ApiResponse.success(result.model_dump(mode='json'))
 
 
 @router.get("/history")
@@ -30,7 +30,7 @@ def list_history(
 ):
     svc = TtsService(db)
     items, total = svc.list_history(user_id, page, page_size)
-    return ApiResponse.paginated([r.model_dump() for r in items], total, page, page_size)
+    return ApiResponse.paginated([r.model_dump(mode='json') for r in items], total, page, page_size)
 
 
 @router.get("/record/{record_id}")
@@ -40,4 +40,4 @@ def get_record(
     db: Session = Depends(get_db),
 ):
     svc = TtsService(db)
-    return ApiResponse.success(svc.get_record(record_id, user_id).model_dump())
+    return ApiResponse.success(svc.get_record(record_id, user_id).model_dump(mode='json'))

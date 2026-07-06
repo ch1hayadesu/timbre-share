@@ -22,14 +22,14 @@ def list_voices(
 ):
     svc = VoiceService(db)
     items, total = svc.list_voices(user_id, page, page_size, keyword, source, status)
-    return ApiResponse.paginated([v.model_dump() for v in items], total, page, page_size)
+    return ApiResponse.paginated([v.model_dump(mode='json') for v in items], total, page, page_size)
 
 
 @router.get("/presets")
 def get_presets(db: Session = Depends(get_db)):
     svc = VoiceService(db)
     voices = svc.get_presets()
-    return ApiResponse.success([v.model_dump() for v in voices])
+    return ApiResponse.success([v.model_dump(mode='json') for v in voices])
 
 
 @router.get("/detail/{voice_id}")
@@ -39,7 +39,7 @@ def get_voice(
     db: Session = Depends(get_db),
 ):
     svc = VoiceService(db)
-    return ApiResponse.success(svc.get_voice(voice_id, user_id).model_dump())
+    return ApiResponse.success(svc.get_voice(voice_id, user_id).model_dump(mode='json'))
 
 
 @router.post("/clone")
@@ -50,7 +50,7 @@ def create_clone(
 ):
     svc = VoiceService(db)
     result = svc.create_clone_task(user_id, req.voice_name, req.clone_mode)
-    return ApiResponse.success(result.model_dump())
+    return ApiResponse.success(result.model_dump(mode='json'))
 
 
 @router.patch("/update/{voice_id}")
@@ -62,7 +62,7 @@ def update_voice_name(
 ):
     svc = VoiceService(db)
     result = svc.update_voice_name(voice_id, user_id, req.voice_name)
-    return ApiResponse.success(result.model_dump())
+    return ApiResponse.success(result.model_dump(mode='json'))
 
 
 @router.delete("/delete/{voice_id}")
