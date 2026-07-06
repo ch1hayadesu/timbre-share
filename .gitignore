@@ -37,8 +37,6 @@ Thumbs.db
 logs/
 
 # Audio/Model artifacts (keep directory, ignore large files)
-**/*.wav
-**/*.mp3
-**/*.pth
-**/*.onnx
-!**/static/samples/*.wav
+ai-backend/**/*.pth
+ai-backend/**/*.onnx
+ai-backend/**/*.mp3
