@@ -2,6 +2,9 @@
 -- 音色共享平台 — MySQL 8.0 初始化数据
 -- ============================================================
 
+-- 允许向 AUTO_INCREMENT 列插入 0 作为有效值（系统管理员 user_id=0）
+SET @@SESSION.sql_mode = CONCAT(@@SESSION.sql_mode, ',NO_AUTO_VALUE_ON_ZERO');
+
 -- 1. 系统管理员（用于拥有预设音色）
 INSERT INTO `user` (user_id, phone, membership_level) VALUES (0, '00000000000', 1);
 
