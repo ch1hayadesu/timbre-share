@@ -650,10 +650,9 @@ tr:hover td { background: var(--color-bg-hover); }
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       <span class="topnav-badge"></span>
     </button>
-    <div class="topnav-user">
-      <div class="topnav-avatar">X</div>
-      <span class="topnav-username">小明</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    <div class="topnav-user" onclick="showLoginModal()" style="cursor:pointer;">
+      <div class="topnav-avatar" id="user-avatar-display">U</div>
+      <span class="topnav-username" id="user-name-display">点击登录</span>
     </div>
   </div>
 </nav>
@@ -711,6 +710,24 @@ tr:hover td { background: var(--color-bg-hover); }
 
 <!-- ==================== Drawer Container ==================== -->
 <div id="drawer-container"></div>
+
+<!-- ==================== Login Modal ==================== -->
+<div id="login-modal-overlay" onclick="if(event.target===this)closeLoginModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:var(--color-bg-card);border-radius:var(--radius-lg);padding:32px;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <h3 style="font-size:20px;margin-bottom:8px;color:var(--color-text-primary);">登录</h3>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:24px;">手机号验证码登录（开发模式：任意6位验证码）</p>
+    <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px;">手机号</label>
+    <input type="tel" id="login-phone" class="input" placeholder="请输入手机号" value="13800138000" style="margin-bottom:16px;width:100%;">
+    <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px;">验证码</label>
+    <div style="display:flex;gap:8px;margin-bottom:24px;">
+      <input type="text" id="login-code" class="input" placeholder="6位验证码" value="123456" style="flex:1;">
+      <button class="btn btn-default" onclick="sendLoginCode()" id="send-code-btn">发送验证码</button>
+    </div>
+    <button class="btn btn-primary btn-lg" style="width:100%;" onclick="doLoginWithForm()">登录 / 注册</button>
+    <p style="font-size:12px;color:var(--color-text-secondary);text-align:center;margin-top:12px;">开发模式：点击即可登录</p>
+    <button style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--color-text-secondary);" onclick="closeLoginModal()">✕</button>
+  </div>
+</div>
 
 <!-- ==================== Main Content ==================== -->
 <main class="main" id="main-content">
@@ -876,6 +893,14 @@ tr:hover td { background: var(--color-bg-hover); }
     </div>
     <input type="file" id="file-input" accept="audio/*" style="display:none;" onchange="handleFileSelect(this)">
     <div id="file-info" style="display:none;margin-top:16px;"></div>
+    <div style="display:flex;gap:24px;margin-top:16px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+        <input type="radio" name="clone_mode" value="instant" checked> 即时克隆（1-3分钟）
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+        <input type="radio" name="clone_mode" value="deep"> 深度克隆（10-30分钟）
+      </label>
+    </div>
     <div style="margin-top:20px;text-align:right;">
       <button class="btn btn-primary btn-lg" id="start-clone-btn" disabled onclick="startClone()">开始克隆</button>
     </div>
@@ -1151,7 +1176,71 @@ tr:hover td { background: var(--color-bg-hover); }
 
 <!-- ==================== SCRIPTS ==================== -->
 <script>
-// ========== Mock Data ==========
+// ========== API Configuration ==========
+const API_BASE = 'http://127.0.0.1:8000/api/v1';
+let authToken = localStorage.getItem('auth_token') || '1';
+
+function getHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${authToken}`,
+  };
+}
+
+async function apiGet(path) {
+  const resp = await fetch(API_BASE + path, { headers: getHeaders() });
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error(data.message);
+  return data.data;
+}
+
+async function apiPost(path, body) {
+  const resp = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(body || {}),
+  });
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error(data.message);
+  return data.data;
+}
+
+async function apiPatch(path, body) {
+  const resp = await fetch(API_BASE + path, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(body || {}),
+  });
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error(data.message);
+  return data.data;
+}
+
+async function apiDelete(path) {
+  const resp = await fetch(API_BASE + path, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error(data.message);
+  return data.data;
+}
+
+// ========== Auth ==========
+async function loginWithPhone(phone) {
+  await apiPost('/user/send-code', { phone });
+  showToast('info', '验证码已发送（开发模式：任意6位数字）');
+}
+
+async function doLogin(phone, code) {
+  const data = await apiPost('/user/login', { phone, code });
+  authToken = data.token;
+  localStorage.setItem('auth_token', authToken);
+  showToast('success', '登录成功！');
+  return data;
+}
+
+// Keep mock data as fallback when API is unavailable
 const mockVoices = [
   { id:1, name:'温柔女声', source:'cloned', status:'ready', mode:'即时克隆', date:'2026-07-05', downloads:0 },
   { id:2, name:'沉稳男声', source:'cloned', status:'ready', mode:'深度克隆', date:'2026-07-04', downloads:0 },
@@ -1311,165 +1400,230 @@ function renderVoiceCard(v, showActions=true) {
   `;
 }
 
-function renderRecentVoices() {
+async function renderRecentVoices() {
   const container = document.getElementById('recent-voices');
-  container.innerHTML = mockVoices.slice(0, 4).map(v => renderVoiceCard(v, false)).join('');
-}
-
-function renderRecentSynthesis() {
-  const container = document.getElementById('recent-synthesis');
-  container.innerHTML = mockSynthesis.map(s => `
-    <tr>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.text}</td>
-      <td>${s.voice}</td>
-      <td style="font-size:12px;color:var(--color-text-secondary);">${s.params}</td>
-      <td><span class="status-badge ${s.status==='success'?'ready':'failed'}">${s.status==='success'?'成功':'失败'}</span></td>
-      <td style="font-size:12px;color:var(--color-text-secondary);">${s.date}</td>
-      <td>
-        ${s.status==='success' ? '<button class="btn btn-text btn-sm">▶ 播放</button><button class="btn btn-text btn-sm">⬇ 下载</button>' : '<button class="btn btn-text btn-sm">重新生成</button>'}
-      </td>
-    </tr>
-  `).join('');
-}
-
-function renderVoiceList(filter='', source='all', status='all') {
-  let voices = mockVoices;
-  if (filter) voices = voices.filter(v => v.name.includes(filter));
-  if (source !== 'all') voices = voices.filter(v => v.source === source);
-  if (status !== 'all') voices = voices.filter(v => v.status === status);
-  const container = document.getElementById('voice-list');
-  if (voices.length === 0) {
-    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🎤</div><div class="empty-state-title">没有找到匹配的音色</div><div class="empty-state-desc">试试调整筛选条件或克隆新的音色</div></div>`;
-  } else {
-    container.innerHTML = voices.map(v => renderVoiceCard(v)).join('');
+  try {
+    const result = await apiGet('/voice/list?page=1&page_size=4');
+    const voices = result.items || [];
+    container.innerHTML = voices.map(v => renderVoiceCard({
+      id: v.voice_id,
+      name: v.voice_name,
+      source: v.source,
+      status: v.status === 1 ? 'ready' : (v.status === -1 ? 'failed' : 'processing'),
+      mode: v.clone_mode === 0 ? '即时克隆' : '深度克隆',
+      date: v.created_at ? v.created_at.split('T')[0] : '-',
+      downloads: 0,
+      audio_url: v.audio_url,
+    }, false)).join('');
+    if (!voices.length) container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--color-text-secondary);">暂无音色</div>';
+  } catch (e) {
+    container.innerHTML = mockVoices.slice(0, 4).map(v => renderVoiceCard(v, false)).join('');
   }
 }
 
-function renderMarketVoices(filter='', sort='newest') {
-  let voices = [...mockMarketVoices];
-  if (filter) voices = voices.filter(v => v.name.includes(filter));
-  if (sort === 'popular') voices.sort((a,b) => b.downloads - a.downloads);
+async function renderRecentSynthesis() {
+  const container = document.getElementById('recent-synthesis');
+  try {
+    const result = await apiGet('/tts/history?page=1&page_size=5');
+    const records = result.items || [];
+    container.innerHTML = records.map(s => `
+      <tr>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.text}</td>
+        <td>${s.voice_id || '-'}</td>
+        <td style="font-size:12px;color:var(--color-text-secondary);">语速${s.speed}x 音量${s.volume}% 音调${s.pitch}</td>
+        <td><span class="status-badge ${s.status===1?'ready':s.status===-1?'failed':'processing'}">${s.status===1?'成功':s.status===-1?'失败':'处理中'}</span></td>
+        <td style="font-size:12px;color:var(--color-text-secondary);">${s.created_at ? s.created_at.replace('T',' ') : '-'}</td>
+        <td>
+          ${s.status===1 && s.audio_url ? `<button class="btn btn-text btn-sm" onclick="window.open('/audio/tts/${s.audio_url.split('/').pop()}','_blank')">▶ 播放</button>` : ''}
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = mockSynthesis.map(s => `
+      <tr>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.text}</td>
+        <td>${s.voice}</td>
+        <td style="font-size:12px;color:var(--color-text-secondary);">${s.params}</td>
+        <td><span class="status-badge ${s.status==='success'?'ready':'failed'}">${s.status==='success'?'成功':'失败'}</span></td>
+        <td style="font-size:12px;color:var(--color-text-secondary);">${s.date}</td>
+        <td>${s.status==='success' ? '<button class="btn btn-text btn-sm">▶ 播放</button>' : ''}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+async function renderVoiceList(filter='', source='all', status='all') {
+  const container = document.getElementById('voice-list');
+  try {
+    let url = `/voice/list?page=1&page_size=50`;
+    if (filter) url += `&keyword=${encodeURIComponent(filter)}`;
+    if (source !== 'all') url += `&source=${source}`;
+    const result = await apiGet(url);
+    const voices = (result.items || []).map(v => ({
+      id: v.voice_id,
+      name: v.voice_name,
+      source: v.source,
+      status: v.status === 1 ? 'ready' : (v.status === -1 ? 'failed' : 'processing'),
+      mode: v.clone_mode === 0 ? '即时克隆' : '深度克隆',
+      date: v.created_at ? v.created_at.split('T')[0] : '-',
+      downloads: 0,
+      audio_url: v.audio_url,
+    }));
+    if (filter) voices.filter(v => v.name.includes(filter));
+    if (voices.length === 0) {
+      container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🎤</div><div class="empty-state-title">没有找到匹配的音色</div><div class="empty-state-desc">试试调整筛选条件或克隆新的音色</div></div>`;
+    } else {
+      container.innerHTML = voices.map(v => renderVoiceCard(v)).join('');
+    }
+  } catch (e) {
+    let voices = mockVoices;
+    if (filter) voices = voices.filter(v => v.name.includes(filter));
+    if (source !== 'all') voices = voices.filter(v => v.source === source);
+    if (status !== 'all') voices = voices.filter(v => v.status === status);
+    if (voices.length === 0) {
+      container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🎤</div><div class="empty-state-title">没有找到匹配的音色</div><div class="empty-state-desc">试试调整筛选条件或克隆新的音色</div></div>`;
+    } else {
+      container.innerHTML = voices.map(v => renderVoiceCard(v)).join('');
+    }
+  }
+}
+
+async function renderMarketVoices(filter='', sort='newest') {
   const container = document.getElementById('market-voice-list');
-  container.innerHTML = voices.map(v => `
-    <div class="card market-card card-clickable" onclick="openMarketDetail(${v.id})">
-      <div class="market-card-wave">
-        ${Array.from({length:10}, (_,i) => `<div class="wave-bar"></div>`).join('')}
-      </div>
-      <div class="market-card-body">
-        <div class="market-card-name">${v.name}</div>
-        <div class="market-card-author">分享者：${v.author}</div>
-        <div class="market-card-stats">
-          <span class="market-card-stat">⬇ ${v.downloads} 次下载</span>
-          <span class="market-card-stat">📅 ${v.date}</span>
+  try {
+    let url = `/share/public?page=1&page_size=50`;
+    if (filter) url += `&keyword=${encodeURIComponent(filter)}`;
+    const result = await apiGet(url);
+    const items = (result.items || []).map(v => ({
+      id: v.share_id,
+      name: v.voice_name,
+      author: `用户${v.user_id}`,
+      downloads: v.download_count,
+      date: v.created_at ? v.created_at.split('T')[0] : '-',
+      voice_id: v.voice_id,
+    }));
+    if (sort === 'popular') items.sort((a,b) => b.downloads - a.downloads);
+    container.innerHTML = items.map(v => `
+      <div class="card market-card card-clickable" onclick="openMarketDetail(${v.id})">
+        <div class="market-card-wave">
+          ${Array.from({length:10}, (_,i) => `<div class="wave-bar"></div>`).join('')}
         </div>
-        <div class="market-card-actions">
-          <button class="btn btn-sm btn-default" onclick="event.stopPropagation();showToast('info','试听功能演示中')">▶ 试听</button>
-          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();downloadVoice(${v.id})">下载</button>
+        <div class="market-card-body">
+          <div class="market-card-name">${v.name}</div>
+          <div class="market-card-author">分享者：${v.author}</div>
+          <div class="market-card-stats">
+            <span class="market-card-stat">⬇ ${v.downloads} 次下载</span>
+            <span class="market-card-stat">📅 ${v.date}</span>
+          </div>
+          <div class="market-card-actions">
+            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();downloadVoice(${v.id},'${v.name}')">下载</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+    if (!items.length) container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🎵</div><div class="empty-state-title">暂无共享音色</div></div>';
+  } catch (e) {
+    let voices = [...mockMarketVoices];
+    if (filter) voices = voices.filter(v => v.name.includes(filter));
+    if (sort === 'popular') voices.sort((a,b) => b.downloads - a.downloads);
+    container.innerHTML = voices.map(v => `
+      <div class="card market-card card-clickable" onclick="openMarketDetail(${v.id})">
+        <div class="market-card-wave">
+          ${Array.from({length:10}, (_,i) => `<div class="wave-bar"></div>`).join('')}
+        </div>
+        <div class="market-card-body">
+          <div class="market-card-name">${v.name}</div>
+          <div class="market-card-author">分享者：${v.author}</div>
+          <div class="market-card-stats">
+            <span class="market-card-stat">⬇ ${v.downloads} 次下载</span>
+            <span class="market-card-stat">📅 ${v.date}</span>
+          </div>
+          <div class="market-card-actions">
+            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();downloadVoice(${v.id},'${v.name}')">下载</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
 }
 
 // ========== Voice Detail Drawer ==========
-function openVoiceDetail(id) {
-  const v = mockVoices.find(v => v.id === id);
-  if (!v) return;
-  const statusMap = { ready:'就绪', processing:'处理中', failed:'失败', shared:'已分享' };
-  const sourceMap = { cloned:'克隆', shared:'下载', preset:'预设' };
-  const statusClass = v.status;
-
-  const content = `
-    <div style="text-align:center;margin-bottom:24px;">
-      <div class="voice-card-wave" style="height:100px;border-radius:var(--radius-lg);margin-bottom:16px;">
-        ${Array.from({length:16}, (_,i) => `<div class="wave-bar"></div>`).join('')}
+async function openVoiceDetail(id) {
+  try {
+    const v = await apiGet(`/voice/detail/${id}`);
+    const statusMap = ['处理中','就绪',null,'失败'];
+    const statusText = v.status === 1 ? '就绪' : (v.status === -1 ? '失败' : '处理中');
+    const statusClass = v.status === 1 ? 'ready' : (v.status === -1 ? 'failed' : 'processing');
+    const sourceMap = { cloned:'克隆', shared:'下载', preset:'预设' };
+    const content = `
+      <div style="text-align:center;margin-bottom:24px;">
+        <div class="voice-card-wave" style="height:100px;border-radius:var(--radius-lg);margin-bottom:16px;">
+          ${Array.from({length:16}, (_,i) => `<div class="wave-bar"></div>`).join('')}
+        </div>
+        <h3 style="font-size:20px;color:var(--color-text-primary);margin-bottom:8px;">${v.voice_name}</h3>
+        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">
+          <span class="tag tag-primary">${sourceMap[v.source] || v.source}</span>
+          <span class="status-badge ${statusClass}">${statusText}</span>
+          <span class="tag tag-default">${v.clone_mode === 0 ? '即时克隆' : '深度克隆'}</span>
+        </div>
       </div>
-      <h3 style="font-size:20px;color:var(--color-text-primary);margin-bottom:8px;">${v.name}</h3>
-      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">
-        <span class="tag tag-primary">${sourceMap[v.source]}</span>
-        <span class="status-badge ${statusClass}">${statusMap[v.status]}</span>
-        <span class="tag tag-default">${v.mode}</span>
+      <div style="background:var(--color-bg-section);border-radius:var(--radius-md);padding:16px;">
+        <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px;">音色信息</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+          <div><span style="color:var(--color-text-secondary);">来源：</span>${sourceMap[v.source] || v.source}</div>
+          <div><span style="color:var(--color-text-secondary);">模式：</span>${v.clone_mode === 0 ? '即时克隆' : '深度克隆'}</div>
+          <div><span style="color:var(--color-text-secondary);">状态：</span>${statusText}</div>
+          <div><span style="color:var(--color-text-secondary);">日期：</span>${v.created_at ? v.created_at.split('T')[0] : '-'}</div>
+        </div>
       </div>
-    </div>
-    <div class="audio-player" style="margin-bottom:20px;">
-      <div class="audio-player-header">
-        <span class="audio-player-title">🎵 试听样本</span>
-        <span class="audio-player-time">0:00 / 0:30</span>
-      </div>
-      <div class="audio-progress"><div class="audio-progress-fill" style="width:60%;"></div></div>
-      <div class="audio-controls">
-        <button class="audio-btn audio-btn-play">▶</button>
-        <span style="font-size:13px;color:var(--color-text-secondary);">点击播放试听</span>
-      </div>
-    </div>
-    <div style="background:var(--color-bg-section);border-radius:var(--radius-md);padding:16px;">
-      <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px;">音色信息</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
-        <div><span style="color:var(--color-text-secondary);">来源：</span>${sourceMap[v.source]}</div>
-        <div><span style="color:var(--color-text-secondary);">模式：</span>${v.mode}</div>
-        <div><span style="color:var(--color-text-secondary);">状态：</span>${statusMap[v.status]}</div>
-        <div><span style="color:var(--color-text-secondary);">日期：</span>${v.date}</div>
-        <div><span style="color:var(--color-text-secondary);">下载次数：</span>${v.downloads}</div>
-      </div>
-    </div>
-  `;
-  showDrawer(v.name + ' - 音色详情', content);
+    `;
+    showDrawer(v.voice_name + ' - 音色详情', content);
+  } catch (e) {
+    showToast('error', '获取音色详情失败');
+  }
 }
 
 // ========== Market Detail ==========
 function openMarketDetail(id) {
-  const v = mockMarketVoices.find(v => v.id === id);
-  if (!v) return;
-  showModal(v.name, `
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="width:100%;height:80px;background:var(--gradient-card);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:16px;">
-        ${Array.from({length:16}, (_,i) => `<div class="wave-bar"></div>`).join('')}
-      </div>
-      <p style="font-size:13px;color:var(--color-text-secondary);">分享者：${v.author} · 下载 ${v.downloads} 次 · ${v.date}</p>
-    </div>
-    <div class="audio-player" style="margin-bottom:16px;">
-      <div class="audio-player-header"><span class="audio-player-title">🎵 试听样本</span></div>
-      <div class="audio-progress"><div class="audio-progress-fill" style="width:40%;"></div></div>
-      <div class="audio-controls"><button class="audio-btn audio-btn-play">▶</button></div>
-    </div>
-    <p style="font-size:13px;color:var(--color-text-secondary);">下载后该音色将添加到你的语音库，可用于TTS合成和剧本配音。</p>
-  `, () => downloadVoice(v.id), '下载到我的语音库');
+  showModal('音色详情', `
+    <p style="font-size:14px;color:var(--color-text-secondary);">下载后该音色将添加到你的语音库，可用于TTS合成和剧本配音。</p>
+  `, () => downloadVoice(id), '下载到我的语音库');
 }
 
 // ========== Actions ==========
-function shareVoice(id) {
-  showModal('分享音色到平台', '<p style="font-size:14px;">确定要将该音色分享到公共平台吗？分享后其他用户可下载使用。</p>', () => {
-    const v = mockVoices.find(v => v.id === id);
-    if (v) v.status = 'shared';
-    renderVoiceList();
-    showToast('success', '音色已成功分享到平台！');
+async function shareVoice(id) {
+  showModal('分享音色到平台', '<p style="font-size:14px;">确定要将该音色分享到公共平台吗？分享后其他用户可下载使用。</p>', async () => {
+    try {
+      await apiPost(`/share/publish/${id}`, {});
+      showToast('success', '音色已成功分享到平台！');
+      renderVoiceList();
+    } catch (e) {
+      showToast('error', e.message || '分享失败');
+    }
   }, '确认分享');
 }
 
-function deleteVoice(id) {
-  showModal('删除音色', '<p style="font-size:14px;color:var(--color-error);">此操作不可撤销，确定要删除该音色吗？</p>', () => {
-    const idx = mockVoices.findIndex(v => v.id === id);
-    if (idx > -1) mockVoices.splice(idx, 1);
-    renderVoiceList(); renderRecentVoices();
-    showToast('success', '音色已删除');
+async function deleteVoice(id) {
+  showModal('删除音色', '<p style="font-size:14px;color:var(--color-error);">此操作不可撤销，确定要删除该音色吗？</p>', async () => {
+    try {
+      await apiDelete(`/voice/delete/${id}`);
+      showToast('success', '音色已删除');
+      renderVoiceList();
+      renderRecentVoices();
+    } catch (e) {
+      showToast('error', e.message || '删除失败');
+    }
   }, '确认删除', true);
 }
 
-function downloadVoice(id) {
-  const v = mockMarketVoices.find(v => v.id === id);
-  showToast('info', `正在下载「${v.name}」...`);
-  setTimeout(() => {
-    mockVoices.push({
-      id: mockVoices.length + 1,
-      name: v.name,
-      source: 'shared',
-      status: 'ready',
-      mode: '下载',
-      date: new Date().toISOString().split('T')[0],
-      downloads: 0
-    });
-    showToast('success', `「${v.name}」已下载到你的语音库！`);
-  }, 1500);
+async function downloadVoice(id, name) {
+  showToast('info', `正在下载「${name || '音色'}」...`);
+  try {
+    await apiPost(`/share/download/${id}`);
+    showToast('success', `「${name || '音色'}」已下载到你的语音库！`);
+  } catch (e) {
+    showToast('error', e.message || '下载失败');
+  }
 }
 
 // ========== Voice Filtering ==========
@@ -1481,9 +1635,12 @@ function filterMarketVoices(val) { renderMarketVoices(val); }
 function sortMarketVoices(val) { renderMarketVoices('', val); }
 
 // ========== Clone Flow ==========
+let selectedFile = null;
+
 function handleFileSelect(input) {
   if (input.files.length === 0) return;
-  const file = input.files[0];
+  selectedFile = input.files[0];
+  const file = selectedFile;
   const zone = document.getElementById('upload-zone');
   const info = document.getElementById('file-info');
   zone.classList.add('has-file');
@@ -1493,7 +1650,7 @@ function handleFileSelect(input) {
       <span style="font-size:24px;">🎵</span>
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:500;">${file.name}</div>
-        <div style="font-size:12px;color:var(--color-text-secondary);">${(file.size/1024/1024).toFixed(2)} MB · ${file.type}</div>
+        <div style="font-size:12px;color:var(--color-text-secondary);">${(file.size/1024/1024).toFixed(2)} MB · ${file.type || 'audio'}</div>
       </div>
       <span class="tag tag-success">已选择</span>
     </div>
@@ -1502,8 +1659,7 @@ function handleFileSelect(input) {
   document.getElementById('upload-zone').querySelector('.upload-text').textContent = '点击重新选择文件';
 }
 
-function startClone() {
-  const steps = document.querySelectorAll('#clone-steps .step');
+async function startClone() {
   const uploadDiv = document.getElementById('clone-upload');
   const processingDiv = document.getElementById('clone-processing');
   const resultDiv = document.getElementById('clone-result');
@@ -1511,40 +1667,49 @@ function startClone() {
   const progressText = document.getElementById('clone-progress-text');
   const statusText = document.getElementById('clone-status-text');
 
+  const voiceName = document.getElementById('clone-name')?.value || '我的新音色';
+  const cloneMode = document.querySelector('input[name="clone_mode"]:checked')?.value === 'deep' ? 1 : 0;
+
+  if (!selectedFile) {
+    showToast('warning', '请先选择音频文件');
+    return;
+  }
+
   uploadDiv.style.display = 'none';
   processingDiv.style.display = 'block';
   resultDiv.style.display = 'none';
 
-  // Simulate progress
-  let progress = 0;
-  const phases = [
-    { p: 20, text: 'AI 正在预处理音频...', step: 1 },
-    { p: 40, text: '正在进行降噪处理...', step: 1 },
-    { p: 60, text: '正在提取声纹特征...', step: 2 },
-    { p: 80, text: 'AI 正在训练音色模型...', step: 2 },
-    { p: 100, text: '音色克隆完成！', step: 3 },
-  ];
+  statusText.textContent = '正在上传音频...';
+  progressFill.style.width = '10%';
+  progressText.textContent = '10%';
 
-  let phaseIdx = 0;
-  const interval = setInterval(() => {
-    if (phaseIdx < phases.length) {
-      const phase = phases[phaseIdx];
-      progress = phase.p;
-      progressFill.style.width = progress + '%';
-      progressText.textContent = progress + '%';
-      statusText.textContent = phase.text;
-      updateCloneSteps(phase.step);
-      phaseIdx++;
-    } else {
-      clearInterval(interval);
-      setTimeout(() => {
-        processingDiv.style.display = 'none';
-        resultDiv.style.display = 'block';
-        updateCloneSteps(3);
-        showToast('success', '音色克隆成功！');
-      }, 500);
-    }
-  }, 1200);
+  try {
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('voice_name', voiceName);
+    formData.append('clone_mode', cloneMode);
+
+    const resp = await fetch(API_BASE + '/voice/clone', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authToken}` },
+      body: formData,
+    });
+    const data = await resp.json();
+    if (data.code !== 0) throw new Error(data.message);
+
+    progressFill.style.width = '100%';
+    progressText.textContent = '100%';
+    statusText.textContent = '克隆任务已提交！';
+
+    setTimeout(() => {
+      processingDiv.style.display = 'none';
+      resultDiv.style.display = 'block';
+      showToast('success', '音色克隆任务已提交！后台处理中...');
+    }, 1000);
+  } catch (e) {
+    showToast('error', e.message || '克隆提交失败');
+    setTimeout(() => resetClone(), 1500);
+  }
 }
 
 function updateCloneSteps(activeStep) {
@@ -1557,19 +1722,13 @@ function updateCloneSteps(activeStep) {
   });
 }
 
-function saveCloneResult() {
+async function saveCloneResult() {
   const name = document.getElementById('clone-name').value || '我的新音色';
-  mockVoices.unshift({
-    id: mockVoices.length + 1,
-    name: name,
-    source: 'cloned',
-    status: 'ready',
-    mode: '即时克隆',
-    date: new Date().toISOString().split('T')[0],
-    downloads: 0
-  });
-  showToast('success', `音色「${name}」已保存！`);
-  setTimeout(() => navigateTo('voices'), 1000);
+  showToast('success', `音色「${name}」已保存！请前往音色管理查看。`);
+  setTimeout(() => {
+    navigateTo('voices');
+    renderVoiceList();
+  }, 1000);
 }
 
 function resetClone() {
@@ -1578,6 +1737,7 @@ function resetClone() {
   document.getElementById('clone-result').style.display = 'none';
   document.getElementById('file-input').value = '';
   document.getElementById('file-info').style.display = 'none';
+  selectedFile = null;
   document.getElementById('start-clone-btn').disabled = true;
   document.getElementById('upload-zone').classList.remove('has-file');
   document.getElementById('upload-zone').querySelector('.upload-text').textContent = '点击或拖拽音频文件到此处上传';
@@ -1593,15 +1753,32 @@ function updateCharCount() {
   el.className = 'char-count' + (count > 1000 ? ' over' : '');
 }
 
-function synthesizeTTS() {
+async function synthesizeTTS() {
   const text = document.getElementById('tts-text').value;
   if (!text.trim()) { showToast('warning', '请输入合成文本'); return; }
   if (text.length > 1000) { showToast('error', '文本超过1000字限制'); return; }
-  showToast('info', '正在合成语音...');
-  setTimeout(() => {
+
+  const voiceSelect = document.getElementById('tts-voice-select');
+  const voiceId = parseInt(voiceSelect.value);
+  const speed = parseFloat(document.getElementById('tts-speed').value);
+  const volume = parseInt(document.getElementById('tts-volume').value);
+  const pitch = parseInt(document.getElementById('tts-pitch').value);
+
+  showToast('info', '正在提交TTS合成任务...');
+  try {
+    await apiPost('/tts/synthesize', {
+      voice_id: voiceId,
+      text: text,
+      speed: speed,
+      volume: volume,
+      pitch: pitch,
+    });
     document.getElementById('tts-result').style.display = 'block';
-    showToast('success', 'TTS合成完成！');
-  }, 2000);
+    showToast('success', 'TTS合成任务已提交！请稍后查看历史记录。');
+    setTimeout(() => renderRecentSynthesis(), 2000);
+  } catch (e) {
+    showToast('error', e.message || 'TTS合成失败');
+  }
 }
 
 // ========== Script Dubbing ==========
@@ -1663,8 +1840,71 @@ function resetScript() {
   document.getElementById('script-upload-zone').querySelector('.upload-text').textContent = '点击上传 TXT 格式剧本文件';
 }
 
+// ========== Auth (Login) ==========
+function showLoginModal() {
+  document.getElementById('login-modal-overlay').style.display = 'flex';
+}
+function closeLoginModal() {
+  document.getElementById('login-modal-overlay').style.display = 'none';
+}
+let loginCodeTimer = null;
+function sendLoginCode() {
+  const phone = document.getElementById('login-phone').value;
+  if (!phone || phone.length < 11) { showToast('warning', '请输入有效的手机号'); return; }
+  const btn = document.getElementById('send-code-btn');
+  btn.disabled = true;
+  let sec = 60;
+  btn.textContent = sec + 's';
+  loginCodeTimer = setInterval(() => {
+    sec--;
+    if (sec <= 0) {
+      clearInterval(loginCodeTimer);
+      btn.disabled = false;
+      btn.textContent = '重新发送';
+    } else {
+      btn.textContent = sec + 's';
+    }
+  }, 1000);
+  apiPost('/auth/login/code', { phone: phone }).then(() => {
+    showToast('success', '验证码已发送（开发模式：123456）');
+  }).catch(() => {
+    showToast('success', '验证码已发送（开发模式：123456）');
+  });
+}
+async function doLoginWithForm() {
+  const phone = document.getElementById('login-phone').value;
+  const code = document.getElementById('login-code').value;
+  if (!phone || !code) { showToast('warning', '请填写手机号和验证码'); return; }
+  try {
+    const resp = await apiPost('/auth/login', { phone: phone, code: code });
+    const userId = resp.data?.user_id || 1;
+    const nickname = resp.data?.nickname || phone.slice(0, 3) + '****' + phone.slice(7);
+    localStorage.setItem('authToken', String(userId));
+    localStorage.setItem('nickname', nickname);
+    document.getElementById('user-name-display').textContent = nickname;
+    document.getElementById('user-avatar-display').textContent = nickname[0];
+    closeLoginModal();
+    showToast('success', '登录成功！');
+  } catch (e) {
+    // dev fallback: just use phone as token
+    localStorage.setItem('authToken', '1');
+    localStorage.setItem('nickname', phone.slice(0, 3) + '****' + phone.slice(7));
+    document.getElementById('user-name-display').textContent = localStorage.getItem('nickname');
+    document.getElementById('user-avatar-display').textContent = localStorage.getItem('nickname')[0];
+    closeLoginModal();
+    showToast('success', '登录成功！（开发模式）');
+  }
+  renderRecentVoices();
+  renderRecentSynthesis();
+}
+
 // ========== Initialize ==========
 document.addEventListener('DOMContentLoaded', () => {
+  const savedNick = localStorage.getItem('nickname');
+  if (savedNick) {
+    document.getElementById('user-name-display').textContent = savedNick;
+    document.getElementById('user-avatar-display').textContent = savedNick[0];
+  }
   renderRecentVoices();
   renderRecentSynthesis();
   updateCharCount();

@@ -12,13 +12,16 @@ router = APIRouter(prefix="/voice", tags=["音色管理模块"])
 
 @router.get("/list")
 def list_voices(
+    keyword: str | None = Query(None),
+    source: str | None = Query(None),
+    status: int | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(12, ge=1, le=50),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     svc = VoiceService(db)
-    items, total = svc.list_voices(user_id, page, page_size)
+    items, total = svc.list_voices(user_id, page, page_size, keyword, source, status)
     return ApiResponse.paginated([v.model_dump() for v in items], total, page, page_size)
 
 

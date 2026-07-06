@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, Integer, BigInteger, SmallInteger, String, Text, Float, ForeignKey, TIMESTAMP
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Boolean, Column, Integer, BigInteger, SmallInteger, String, Text, Float, ForeignKey, TIMESTAMP, JSON
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -61,6 +60,7 @@ class TtsRecord(Base):
     pitch = Column(Integer, nullable=False, default=0)
     audio_url = Column(String(500), nullable=True)
     status = Column(SmallInteger, nullable=False, default=0)
+    error_message = Column(String(500), nullable=True)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
 
     user = relationship("User", back_populates="tts_records")
@@ -76,8 +76,8 @@ class ScriptDubTask(Base):
     script_text = Column(Text, nullable=False)
     charset = Column(String(10), nullable=True)
     role_count = Column(Integer, nullable=False, default=0)
-    voice_mapping = Column(JSONB, nullable=True)
-    emotion_result = Column(JSONB, nullable=True)
+    voice_mapping = Column(JSON, nullable=True)
+    emotion_result = Column(JSON, nullable=True)
     output_url = Column(String(500), nullable=True)
     status = Column(SmallInteger, nullable=False, default=0)
     error_message = Column(String(500), nullable=True)

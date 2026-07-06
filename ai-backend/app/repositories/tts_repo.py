@@ -41,3 +41,11 @@ class TtsRepo:
             record.audio_url = audio_url
             record.status = 1
             self.db.commit()
+
+    def update_status(self, record_id: int, status: int, error_message: str | None = None):
+        record = self.get_by_id(record_id)
+        if record:
+            record.status = status
+            if error_message:
+                record.error_message = error_message
+            self.db.commit()

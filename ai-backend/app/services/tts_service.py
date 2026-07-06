@@ -4,6 +4,7 @@ from app.core.exceptions import NotFoundError, ForbiddenError, ParamError
 from app.repositories.tts_repo import TtsRepo
 from app.repositories.voice_repo import VoiceRepo
 from app.schemas.tts import TtsRecordVO, TtsRequest
+from app.tasks.tts_tasks import synthesize_tts
 
 
 class TtsService:
@@ -28,6 +29,14 @@ class TtsService:
             user_id=user_id,
             voice_id=req.voice_id,
             text=req.text,
+            speed=req.speed,
+            volume=req.volume,
+            pitch=req.pitch,
+        )
+        synthesize_tts.delay(
+            record_id=record.record_id,
+            text=req.text,
+            voice_id=req.voice_id,
             speed=req.speed,
             volume=req.volume,
             pitch=req.pitch,

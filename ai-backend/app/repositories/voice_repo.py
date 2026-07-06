@@ -11,8 +11,17 @@ class VoiceRepo:
     def get_by_id(self, voice_id: int) -> Voice | None:
         return self.db.query(Voice).filter(Voice.voice_id == voice_id).first()
 
-    def get_by_user(self, user_id: int, page: int = 1, page_size: int = 12):
-        query = self.db.query(Voice).filter(Voice.user_id == user_id).order_by(desc(Voice.created_at))
+    def get_by_user(self, user_id: int, page: int = 1, page_size: int = 12,
+                    keyword: str | None = None, source: str | None = None,
+                    status: int | None = None):
+        query = self.db.query(Voice).filter(Voice.user_id == user_id)
+        if keyword:
+            query = query.filter(Voice.voice_name.ilike(f"%{keyword}%"))
+        if source:
+            query = query.filter(Voice.source == source)
+        if status is not None:
+            query = query.filter(Voice.status == status)
+        query = query.order_by(desc(Voice.created_at))
         total = query.count()
         items = query.offset((page - 1) * page_size).limit(page_size).all()
         return items, total
