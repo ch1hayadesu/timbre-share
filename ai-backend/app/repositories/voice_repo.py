@@ -29,8 +29,10 @@ class VoiceRepo:
     def get_preset_voices(self):
         return self.db.query(Voice).filter(Voice.source == "preset").all()
 
-    def create(self, user_id: int, voice_name: str, clone_mode: int = 0) -> Voice:
-        voice = Voice(user_id=user_id, voice_name=voice_name, clone_mode=clone_mode, status=0)
+    def create(self, user_id: int, voice_name: str, clone_mode: int = 0,
+               raw_audio_url: str | None = None) -> Voice:
+        voice = Voice(user_id=user_id, voice_name=voice_name, clone_mode=clone_mode,
+                      status=0, raw_audio_url=raw_audio_url)
         self.db.add(voice)
         self.db.commit()
         self.db.refresh(voice)

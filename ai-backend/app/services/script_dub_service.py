@@ -4,6 +4,7 @@ from app.core.exceptions import NotFoundError, ParamError
 from app.repositories.script_dub_repo import ScriptDubRepo
 from app.repositories.voice_repo import VoiceRepo
 from app.schemas.script_dub import ScriptDubVO
+from app.tasks.dub_tasks import process_dub_task
 
 
 class ScriptDubService:
@@ -36,6 +37,7 @@ class ScriptDubService:
             charset=charset,
             voice_mapping=voice_mapping,
         )
+        process_dub_task.delay(task_id=task.task_id)
         return ScriptDubVO.model_validate(task)
 
     def list_tasks(self, user_id: int, page: int, page_size: int) -> tuple[list[ScriptDubVO], int]:

@@ -1,0 +1,263 @@
+/* ========== CSS Variables (Design Tokens) ========== */
+:root {
+  /* Brand Colors */
+  --color-primary-1: #F5F3FF;
+  --color-primary-5: #8B5CF6;
+  --color-primary-6: #7C3AED;
+  --color-primary-7: #6D28D9;
+  --color-link: #3B82F6;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #6366F1;
+
+  /* Text Colors */
+  --color-text-primary: #1F2937;
+  --color-text-body: #374151;
+  --color-text-secondary: #6B7280;
+  --color-text-disabled: #9CA3AF;
+  --color-text-inverse: #FFFFFF;
+
+  /* Background Colors */
+  --color-bg-page: #F9FAFB;
+  --color-bg-section: #F3F4F6;
+  --color-bg-container: #FFFFFF;
+  --color-bg-hover: #F9FAFB;
+  --color-bg-selected: #F5F3FF;
+
+  /* Border Colors */
+  --color-border-default: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-border-dark: #D1D5DB;
+
+  /* Gradients */
+  --gradient-ai: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%);
+  --gradient-audio: linear-gradient(90deg, #8B5CF6 0%, #A78BFA 50%, #C4B5FD 100%);
+  --gradient-card: linear-gradient(180deg, #F5F3FF 0%, #FFFFFF 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --shadow-focus: 0 0 0 2px rgba(124, 58, 237, 0.15);
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+
+  /* Animation */
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+  --ease-out: cubic-bezier(0.00, 0.00, 0.20, 1.00);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1.00);
+
+  /* Layout */
+  --topnav-h: 56px;
+  --sidenav-w: 240px;
+}
+
+/* ========== Reset & Base ========== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--color-text-body);
+  background: var(--color-bg-page);
+  line-height: 1.6;
+  overflow: hidden;
+  height: 100vh;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* ========== Scrollbar ========== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-dark);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-disabled);
+}
+
+/* ========== Page Transition ========== */
+.page-enter-active {
+  animation: pageIn var(--duration-slow) var(--ease-out);
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== Utility Classes ========== */
+.page-header {
+  margin-bottom: var(--space-6);
+}
+
+.page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.35;
+}
+
+.page-desc {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+.section-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title-link {
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--color-link);
+  cursor: pointer;
+}
+
+.section-title-link:hover {
+  text-decoration: underline;
+}
+
+/* Search Bar */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+/* Grid Layouts */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.voice-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.tts-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 1535px) {
+  .voice-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 1279px) {
+  .main { margin-left: 0 !important; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); }
+  .voice-grid { grid-template-columns: repeat(3, 1fr); }
+  .market-grid { grid-template-columns: repeat(2, 1fr); }
+  .tts-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1023px) {
+  .voice-grid { grid-template-columns: repeat(2, 1fr); }
+  .market-grid { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: var(--space-6) !important; }
+}
+
+@media (max-width: 767px) {
+  .voice-grid { grid-template-columns: 1fr; }
+  .market-grid { grid-template-columns: 1fr; }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: var(--space-4) !important; }
+  .page-title { font-size: var(--font-size-xl); }
+  .search-bar { flex-direction: column; align-items: stretch; }
+}

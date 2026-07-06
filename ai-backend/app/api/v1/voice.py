@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, Query
+from pathlib import Path
+import uuid
+
+from fastapi import APIRouter, Depends, Form, Query, UploadFile
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.core.response import ApiResponse
 from app.core.dependencies import get_current_user_id
 from app.database import get_db
-from app.schemas.voice import CloneRequest, VoiceNameUpdate
+from app.schemas.voice import VoiceNameUpdate
 from app.services.voice_service import VoiceService
 
 router = APIRouter(prefix="/voice", tags=["音色管理模块"])
@@ -43,13 +47,23 @@ def get_voice(
 
 
 @router.post("/clone")
-def create_clone(
-    req: CloneRequest,
+async def create_clone(
+    file: UploadFile,
+    voice_name: str = Form(...),
+    clone_mode: int = Form(0),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
+    upload_dir = Path(settings.data_dir, "audio", "uploads")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    ext = Path(file.filename).suffix if file.filename else ".wav"
+    dest = upload_dir / f"clone_{user_id}_{uuid.uuid4().hex}{ext}"
+    content = await file.read()
+    dest.write_bytes(content)
+    raw_url = f"uploads/{dest.name}"
+
     svc = VoiceService(db)
-    result = svc.create_clone_task(user_id, req.voice_name, req.clone_mode)
+    result = svc.create_clone_task(user_id, voice_name, clone_mode, raw_url)
     return ApiResponse.success(result.model_dump(mode='json'))
 
 

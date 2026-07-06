@@ -1,11 +1,38 @@
 import os
+import shutil
 import subprocess
+import wave
 from pathlib import Path
 
 from app.celery_app import celery_app
 from app.config import settings
 from app.database import SessionLocal
 from app.repositories.voice_repo import VoiceRepo
+
+
+def _ffmpeg_available():
+    return shutil.which("ffmpeg") is not None
+
+
+def _process_audio(audio_path: str, output_wav: Path):
+    if _ffmpeg_available():
+        subprocess.run([
+            "ffmpeg", "-y", "-i", audio_path,
+            "-ar", "16000", "-ac", "1",
+            "-sample_fmt", "s16",
+            str(output_wav)
+        ], check=True, capture_output=True)
+        return
+
+    shutil.copy2(audio_path, output_wav)
+    try:
+        with wave.open(str(output_wav), "rb") as wf:
+            params = wf.getparams()
+        if params.nchannels != 1 or params.framerate != 16000:
+            print(f"WARNING: {output_wav.name} is {params.nchannels}ch/{params.framerate}Hz, "
+                  f"expected mono/16000Hz (install ffmpeg for proper resampling)")
+    except Exception:
+        pass
 
 
 @celery_app.task(bind=True, max_retries=1, default_retry_delay=10)
@@ -26,10 +53,8 @@ def process_clone_task(self, voice_id: int, audio_path: str, clone_mode: int):
         output_dir = models_dir / f"voice_{voice_id}"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        if clone_mode == 0:
-            self._instant_clone(audio_path, output_dir)
-        else:
-            self._deep_clone(audio_path, output_dir)
+        output_wav = output_dir / ("instant_clone.wav" if clone_mode == 0 else "training_input.wav")
+        _process_audio(audio_path, output_wav)
 
         voice_repo.update_status(voice_id, 1)
         db.commit()
@@ -48,24 +73,3 @@ def process_clone_task(self, voice_id: int, audio_path: str, clone_mode: int):
 
     finally:
         db.close()
-
-    @staticmethod
-    def _instant_clone(audio_path: str, output_dir: Path):
-        sample_rate = 16000
-        output_wav = output_dir / "instant_clone.wav"
-        subprocess.run([
-            "ffmpeg", "-y", "-i", audio_path,
-            "-ar", str(sample_rate), "-ac", "1",
-            "-sample_fmt", "s16",
-            str(output_wav)
-        ], check=True, capture_output=True)
-
-    @staticmethod
-    def _deep_clone(audio_path: str, output_dir: Path):
-        sample_rate = 16000
-        output_wav = output_dir / "training_input.wav"
-        subprocess.run([
-            "ffmpeg", "-y", "-i", audio_path,
-            "-ar", str(sample_rate), "-ac", "1",
-            str(output_wav)
-        ], check=True, capture_output=True)

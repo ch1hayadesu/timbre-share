@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.core.exceptions import NotFoundError, ForbiddenError, ParamError
 from app.repositories.voice_repo import VoiceRepo
 from app.schemas.voice import VoiceVO
@@ -24,15 +27,21 @@ class VoiceService:
             raise ForbiddenError("无权访问该音色")
         return VoiceVO.model_validate(voice)
 
-    def create_clone_task(self, user_id: int, voice_name: str, clone_mode: int = 0) -> VoiceVO:
+    def create_clone_task(self, user_id: int, voice_name: str, clone_mode: int = 0,
+                          raw_audio_url: str | None = None) -> VoiceVO:
         if not voice_name or len(voice_name) > 100:
             raise ParamError("音色名称不合法")
         if self.repo.count_active_by_user(user_id) >= 10:
             raise ParamError("音色数量已达上限（10个）")
-        voice = self.repo.create(user_id=user_id, voice_name=voice_name, clone_mode=clone_mode)
+        voice = self.repo.create(user_id=user_id, voice_name=voice_name, clone_mode=clone_mode,
+                                 raw_audio_url=raw_audio_url)
+        if raw_audio_url:
+            audio_path = str(Path(settings.data_dir, "audio", raw_audio_url))
+        else:
+            audio_path = ""
         process_clone_task.delay(
             voice_id=voice.voice_id,
-            audio_path=voice.raw_audio_url or "",
+            audio_path=audio_path,
             clone_mode=clone_mode,
         )
         return VoiceVO.model_validate(voice)
