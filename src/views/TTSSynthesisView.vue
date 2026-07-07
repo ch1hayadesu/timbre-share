@@ -131,7 +131,7 @@ async function synthesize() {
       pitch: ttsPitch.value,
     })
     const result = await pollTaskResult(rec.record_id)
-    audioUrl.value = result.audio_url
+    audioUrl.value = result.audio_url ? `/audio/${result.audio_url}` : ''
     showResult.value = true
     showToast('success', 'TTS合成完成！')
   } catch (err) {
@@ -141,10 +141,10 @@ async function synthesize() {
   }
 }
 
-async function pollTaskResult(taskId, maxWait = 180) {
+async function pollTaskResult(taskId, maxWait = 60) {
   const { pollTask } = await import('@/services')
   for (let i = 0; i < maxWait; i++) {
-    await new Promise(r => setTimeout(r, 1000))
+    await new Promise(r => setTimeout(r, 3000))
     try {
       const result = await pollTask(taskId)
       if (result.status === 1) return result

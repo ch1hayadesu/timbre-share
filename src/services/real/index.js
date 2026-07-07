@@ -17,11 +17,12 @@ export async function getVoiceList(params = {}) {
   Object.keys(query).forEach(k => { if (query[k] === undefined) delete query[k] })
   const result = await get('/voice/list', query)
   if (result && result.items) {
+    const p = result.pagination || {}
     return {
       items: result.items.map(normalizeVoice),
-      total: result.total,
-      page: result.page,
-      pageSize: result.page_size,
+      total: p.total || 0,
+      page: p.page || 1,
+      pageSize: p.pageSize || 10,
     }
   }
   return { items: [], total: 0, page: 1, pageSize: 10 }
@@ -61,11 +62,12 @@ export async function getMarketVoiceList(params = {}) {
   Object.keys(query).forEach(k => { if (query[k] === undefined) delete query[k] })
   const result = await get('/share/public', query)
   if (result && result.items) {
+    const p = result.pagination || {}
     return {
       items: result.items.map(normalizeMarketVoice),
-      total: result.total,
-      page: result.page,
-      pageSize: result.page_size,
+      total: p.total || 0,
+      page: p.page || 1,
+      pageSize: p.pageSize || 12,
     }
   }
   return { items: [], total: 0, page: 1, pageSize: 12 }
@@ -73,6 +75,10 @@ export async function getMarketVoiceList(params = {}) {
 
 export async function downloadMarketVoice(marketVoiceId) {
   return post(`/share/download/${marketVoiceId}`)
+}
+
+export function getMarketVoicePreviewUrl(shareId) {
+  return `/api/v1/share/preview/${shareId}`
 }
 
 // ============================================================
@@ -106,11 +112,12 @@ export async function getSynthesisList(params = {}) {
   Object.keys(query).forEach(k => { if (query[k] === undefined) delete query[k] })
   const result = await get('/tts/history', query)
   if (result && result.items) {
+    const p = result.pagination || {}
     return {
       items: result.items.map(normalizeSynthesis),
-      total: result.total,
-      page: result.page,
-      pageSize: result.page_size,
+      total: p.total || 0,
+      page: p.page || 1,
+      pageSize: p.pageSize || 10,
     }
   }
   return { items: [], total: 0, page: 1, pageSize: 10 }
@@ -123,13 +130,13 @@ export async function getSynthesisList(params = {}) {
 export async function getTTSVoiceOptions() {
   const voices = await get('/voice/presets')
   const ttsVoices = [
-    { value: 'zh-CN-XiaoxiaoNeural', label: '晓晓（女声）' },
-    { value: 'zh-CN-YunxiNeural', label: '云希（男声）' },
-    { value: 'zh-CN-XiaoyiNeural', label: '晓伊（女声）' },
-    { value: 'zh-CN-YunjianNeural', label: '云健（男声）' },
-    { value: 'zh-CN-XiaohanNeural', label: '晓涵（女声）' },
-    { value: 'zh-CN-YunyangNeural', label: '云扬（男声）' },
-    { value: 'zh-CN-XiaochenNeural', label: '晓辰（女声）' },
+    { value: 1, label: '晓晓（女声）' },
+    { value: 2, label: '云希（男声）' },
+    { value: 3, label: '晓伊（女声）' },
+    { value: 4, label: '云健（男声）' },
+    { value: 5, label: '云霞（女声）' },
+    { value: 6, label: '云扬（男声）' },
+    { value: 7, label: '晓北（东北话）' },
   ]
   return ttsVoices
 }
@@ -145,8 +152,8 @@ export async function getDashboardStats() {
       get('/tts/history', { page: 1, page_size: 1 }),
     ])
     return {
-      voiceCount: voiceList?.total || 0,
-      synthesisCount: synthList?.total || 0,
+      voiceCount: voiceList?.pagination?.total || 0,
+      synthesisCount: synthList?.pagination?.total || 0,
       scriptCount: 0,
       downloadCount: 0,
     }
@@ -185,7 +192,8 @@ export async function getScriptDubList(params = {}) {
   Object.keys(query).forEach(k => { if (query[k] === undefined) delete query[k] })
   const result = await get('/script-dub/list', query)
   if (result && result.items) {
-    return { items: result.items, total: result.total, page: result.page, pageSize: result.page_size }
+    const p = result.pagination || {}
+    return { items: result.items, total: p.total || 0, page: p.page || 1, pageSize: p.pageSize || 10 }
   }
   return { items: [], total: 0, page: 1, pageSize: 10 }
 }

@@ -40,11 +40,13 @@ const initialSynthesis = [
 ]
 
 const initialTTSVoiceOptions = [
-  { value: 1, label: '温柔女声' },
-  { value: 2, label: '沉稳男声' },
-  { value: 3, label: '活泼少女' },
-  { value: 4, label: '磁性大叔' },
-  { value: 5, label: '知性女声' },
+  { value: 1, label: '晓晓（女声）' },
+  { value: 2, label: '云希（男声）' },
+  { value: 3, label: '晓伊（女声）' },
+  { value: 4, label: '云健（男声）' },
+  { value: 5, label: '云霞（女声）' },
+  { value: 6, label: '云扬（男声）' },
+  { value: 7, label: '晓北（东北话）' },
 ]
 
 // ---- 运行时的可变数据（深拷贝初始值） ----
@@ -265,6 +267,10 @@ export async function downloadMarketVoice(marketVoiceId) {
   }
   voices.push(voice)
   return clone(voice)
+}
+
+export function getMarketVoicePreviewUrl(shareId) {
+  return ''
 }
 
 // ============================================================

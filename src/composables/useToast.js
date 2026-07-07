@@ -11,7 +11,7 @@ let toastId = 0
 
 export function useToast() {
   const showToast = (type, message, duration = 3000) => {
-    if (type === 'error') duration = 0
+    if (type === 'error') duration = 8000
     if (type === 'warning') duration = 5000
 
     const id = ++toastId
@@ -25,5 +25,10 @@ export function useToast() {
     }
   }
 
-  return { toasts: state.toasts, showToast }
+  const closeToast = (id) => {
+    const idx = state.toasts.findIndex(t => t.id === id)
+    if (idx > -1) state.toasts.splice(idx, 1)
+  }
+
+  return { toasts: state.toasts, showToast, closeToast }
 }

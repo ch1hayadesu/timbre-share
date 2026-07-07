@@ -29,9 +29,11 @@
             <span class="stat">📅 {{ voice.date }}</span>
           </div>
           <div class="market-card-actions">
-            <BaseButton size="sm" @click.stop="showToast('info','试听功能演示中')">▶ 试听</BaseButton>
+            <button v-if="previewId !== voice.id" class="btn-sm-preview" @click.stop="preview(voice)">▶ 试听</button>
+            <button v-else class="btn-sm-preview" @click.stop="previewId = null">关闭</button>
             <BaseButton type="primary" size="sm" @click.stop="download(voice)">下载</BaseButton>
           </div>
+          <audio v-if="previewId === voice.id" :src="previewUrlFor(voice)" controls style="width:100%;height:40px;margin-top:12px;" />
         </div>
       </div>
     </div>
@@ -48,7 +50,7 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import BaseButton from '@/components/BaseButton.vue'
 import WaveAnimation from '@/components/WaveAnimation.vue'
-import { getMarketVoiceList, downloadMarketVoice } from '@/services'
+import { getMarketVoiceList, downloadMarketVoice, getMarketVoicePreviewUrl } from '@/services'
 import { useModal } from '@/composables/useModal'
 import { useToast } from '@/composables/useToast'
 
@@ -59,6 +61,7 @@ const filter = ref('')
 const sort = ref('newest')
 const page = ref(1)
 const pageSize = ref(6)
+const previewId = ref(null)
 
 const marketList = reactive({ items: [], total: 0, page: 1, pageSize: 6 })
 const loading = ref(false)
@@ -124,6 +127,26 @@ async function download(voice) {
   } catch (err) {
     showToast('error', '下载失败：' + err.message)
   }
+}
+
+const previewLoading = ref(false)
+
+async function preview(voice) {
+  if (previewLoading.value) return
+  previewLoading.value = true
+  try {
+    // trigger generation if not cached yet
+    await fetch(getMarketVoicePreviewUrl(voice.share_id))
+    previewId.value = voice.id
+  } catch (_) {
+    previewId.value = voice.id
+  } finally {
+    previewLoading.value = false
+  }
+}
+
+function previewUrlFor(voice) {
+  return `/audio/preview/preview_${voice.share_id}.mp3`
 }
 </script>
 
@@ -218,6 +241,26 @@ async function download(voice) {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.btn-sm-preview {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--color-border-default);
+  background: white;
+  color: var(--color-text-body);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.btn-sm-preview:hover {
+  border-color: var(--color-primary-6);
+  color: var(--color-primary-6);
 }
 
 .market-card-actions {

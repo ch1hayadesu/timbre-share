@@ -13,7 +13,9 @@ VOICE_MAP = {
     2: "zh-CN-YunxiNeural",
     3: "zh-CN-XiaoyiNeural",
     4: "zh-CN-YunjianNeural",
-    5: "zh-CN-XiaohanNeural",
+    5: "zh-CN-YunxiaNeural",
+    6: "zh-CN-YunyangNeural",
+    7: "zh-CN-liaoning-XiaobeiNeural",
 }
 
 

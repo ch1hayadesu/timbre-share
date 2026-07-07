@@ -26,6 +26,7 @@ export const shareVoice         = service.shareVoice
 // 音色市场
 export const getMarketVoiceList = service.getMarketVoiceList
 export const downloadMarketVoice = service.downloadMarketVoice
+export const getMarketVoicePreviewUrl = service.getMarketVoicePreviewUrl
 
 // 合成记录
 export const getSynthesisList   = service.getSynthesisList

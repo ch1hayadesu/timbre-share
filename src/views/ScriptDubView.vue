@@ -20,7 +20,22 @@
 角色C：等等我！我也要去！</pre>
       </div>
 
-      <BaseButton type="primary" size="lg" :loading="loading" :disabled="!hasScriptFile" @click="startDub">开始智能配音</BaseButton>
+      <BaseButton type="primary" size="lg" :disabled="!hasScriptFile" @click="parseRoles">下一步：配置音色</BaseButton>
+    </Card>
+
+    <!-- Voice Mapping -->
+    <Card v-if="phase === 'mapping'">
+      <h3 class="panel-title">🎤 为每个角色选择音色</h3>
+      <p class="panel-desc">已识别到 {{ roleOptions.length }} 个角色，请为每个角色分配不同的 TTS 音色</p>
+      <div class="voice-mapping-list">
+        <div v-for="role in roleOptions" :key="role.name" class="voice-mapping-row">
+          <span class="mapping-role">{{ role.name }}</span>
+          <select class="base-select mapping-select" v-model="role.voiceId">
+            <option v-for="v in ttsVoiceOptions" :key="v.value" :value="v.value">{{ v.label }}</option>
+          </select>
+        </div>
+      </div>
+      <BaseButton type="primary" size="lg" :loading="loading" @click="startDub">开始智能配音</BaseButton>
     </Card>
 
     <!-- Processing -->
@@ -65,7 +80,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import Card from '@/components/Card.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseTag from '@/components/BaseTag.vue'
@@ -74,7 +89,7 @@ import StepIndicator from '@/components/StepIndicator.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import AiLoading from '@/components/AiLoading.vue'
 import AudioPlayer from '@/components/AudioPlayer.vue'
-import { createScriptDubTask, getScriptDubDetail } from '@/services'
+import { createScriptDubTask, getScriptDubDetail, getTTSVoiceOptions } from '@/services'
 import { useToast } from '@/composables/useToast'
 
 const { showToast } = useToast()
@@ -91,7 +106,14 @@ const scriptStatusText = ref('AI 正在分割角色...')
 const roles = ref([])
 const roleCount = ref(0)
 const audioUrl = ref('')
+const roleOptions = ref([])
+const ttsVoiceOptions = ref([])
+const lineRoleRe = /^(.+?)[：:]/
 let scriptText = ''
+
+onMounted(async () => {
+  try { ttsVoiceOptions.value = await getTTSVoiceOptions() } catch (_) {}
+})
 
 function triggerScriptUpload() { scriptInput.value?.click() }
 
@@ -100,12 +122,52 @@ function onScriptSelect(e) {
   if (!file) return
   hasScriptFile.value = true
   const reader = new FileReader()
-  reader.onload = () => { scriptText = reader.result }
-  reader.readAsText(file)
+  reader.onload = () => {
+    try {
+      const bytes = new Uint8Array(reader.result)
+      const decoder = new TextDecoder('utf-8', { fatal: true })
+      scriptText = decoder.decode(bytes)
+    } catch (_) {
+      const decoder = new TextDecoder('gbk', { fatal: false })
+      scriptText = decoder.decode(new Uint8Array(reader.result))
+    }
+  }
+  reader.readAsArrayBuffer(file)
+}
+
+function parseRoles() {
+  if (!scriptText.trim()) { showToast('warning', '请选择有效的剧本文件'); return }
+  const names = new Set()
+  for (const line of scriptText.split('\n')) {
+    const m = line.match(lineRoleRe)
+    if (m) names.add(m[1].trim())
+  }
+  if (names.size === 0) { showToast('warning', '未识别到角色，请检查剧本格式'); return }
+
+  const opts = ttsVoiceOptions.value.length ? ttsVoiceOptions.value : [{ value: 1, label: '默认' }]
+  const usedVoices = new Set()
+  roleOptions.value = Array.from(names).map((name, i) => {
+    let v = opts[i % opts.length]
+    let attempts = 0
+    while (usedVoices.has(v.value) && attempts < opts.length) {
+      attempts++; v = opts[(i + attempts) % opts.length]
+    }
+    usedVoices.add(v.value)
+    return { name, voiceId: v.value }
+  })
+  phase.value = 'mapping'
 }
 
 async function startDub() {
   if (!scriptText.trim()) { showToast('warning', '请选择有效的剧本文件'); return }
+
+  const voiceMapping = {}
+  const used = new Set()
+  for (const role of roleOptions.value) {
+    if (used.has(role.voiceId)) { showToast('warning', `${role.name} 的音色与其他角色重复，请选择不同的音色`); return }
+    used.add(role.voiceId)
+    voiceMapping[role.name] = role.voiceId
+  }
 
   loading.value = true
   phase.value = 'processing'
@@ -113,25 +175,25 @@ async function startDub() {
   scriptProgress.value = 0
 
   try {
-    const task = await createScriptDubTask({ script_text: scriptText })
+    const task = await createScriptDubTask({ script_text: scriptText, voice_mapping: voiceMapping })
     const result = await pollTaskResult(task.task_id)
     renderResult(result)
   } catch (err) {
     showToast('error', '配音失败：' + err.message)
-    phase.value = 'upload'
+    phase.value = 'mapping'
   } finally {
     loading.value = false
   }
 }
 
-async function pollTaskResult(taskId, maxWait = 300) {
+async function pollTaskResult(taskId, maxWait = 100) {
   for (let i = 0; i < maxWait; i++) {
-    const step = Math.min(Math.floor(i / 75), 3)
+    const step = Math.min(Math.floor(i / 25), 3)
     scriptCurrent.value = step
     scriptProgress.value = Math.min((i / maxWait) * 100, 95)
     scriptStatusText.value = scriptSteps[step]
 
-    await new Promise(r => setTimeout(r, 1000))
+    await new Promise(r => setTimeout(r, 3000))
     try {
       const result = await getScriptDubDetail(taskId)
       if (result.status === 1) {
@@ -176,6 +238,7 @@ function resetDub() {
   scriptText = ''
   roles.value = []
   audioUrl.value = ''
+  roleOptions.value = []
   if (scriptInput.value) scriptInput.value.value = ''
 }
 </script>
@@ -267,4 +330,30 @@ function resetDub() {
   justify-content: flex-end;
   margin-top: var(--space-5);
 }
+
+.panel-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+.voice-mapping-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.voice-mapping-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-bg-section);
+  border-radius: var(--radius-md);
+}
+.mapping-role {
+  font-weight: 600;
+  min-width: 80px;
+  font-size: var(--font-size-base);
+}
+.mapping-select { flex: 1; }
 </style>
