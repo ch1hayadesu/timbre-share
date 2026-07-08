@@ -1,3 +1,4 @@
+import asyncio
 import os
 import shutil
 import subprocess
@@ -35,6 +36,29 @@ def _process_audio(audio_path: str, output_wav: Path):
         pass
 
 
+async def _generate_sample_audio(voice_id: int, clone_mode: int) -> str | None:
+    """Generate a demo TTS sample as placeholder for cloned voice."""
+    try:
+        import edge_tts
+        voice_name = "zh-CN-XiaoxiaoNeural" if clone_mode == 0 else "zh-CN-YunxiNeural"
+        demo_text = "你好，这是我克隆的音色样本，欢迎试听。"
+
+        tts_dir = Path(settings.data_dir, "audio", "tts")
+        tts_dir.mkdir(parents=True, exist_ok=True)
+        output_path = tts_dir / f"clone_sample_{voice_id}.mp3"
+
+        communicate = edge_tts.Communicate(demo_text, voice=voice_name)
+        await communicate.save(str(output_path))
+
+        return f"tts/{output_path.name}"
+    except ImportError:
+        print("[CloneTask] edge-tts not installed")
+        return None
+    except Exception as e:
+        print(f"[CloneTask] Sample generation failed: {e}")
+        return None
+
+
 @celery_app.task(bind=True, max_retries=1, default_retry_delay=10)
 def process_clone_task(self, voice_id: int, audio_path: str, clone_mode: int):
     db = SessionLocal()
@@ -43,6 +67,8 @@ def process_clone_task(self, voice_id: int, audio_path: str, clone_mode: int):
         voice = voice_repo.get_by_id(voice_id)
         if not voice:
             return {"error": "voice not found"}
+
+        print(f"[CloneTask] voiceId={voice_id} start processing, clone_mode={clone_mode}")
 
         voice_repo.update_status(voice_id, 2)
         db.commit()
@@ -53,16 +79,31 @@ def process_clone_task(self, voice_id: int, audio_path: str, clone_mode: int):
         output_dir = models_dir / f"voice_{voice_id}"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        output_wav = output_dir / ("instant_clone.wav" if clone_mode == 0 else "training_input.wav")
-        _process_audio(audio_path, output_wav)
+        if audio_path and os.path.exists(audio_path):
+            output_wav = output_dir / ("instant_clone.wav" if clone_mode == 0 else "training_input.wav")
+            _process_audio(audio_path, output_wav)
+            print(f"[CloneTask] voiceId={voice_id} audio processed: {output_wav.name}")
+        else:
+            print(f"[CloneTask] voiceId={voice_id} audio not found, skip preprocessing")
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        sample_rel_path = loop.run_until_complete(_generate_sample_audio(voice_id, clone_mode))
+        loop.close()
+
+        if sample_rel_path:
+            voice_repo.update_sample_url(voice_id, sample_rel_path)
+            print(f"[CloneTask] voiceId={voice_id} sample_url set: {sample_rel_path}")
 
         voice_repo.update_status(voice_id, 1)
         db.commit()
+        print(f"[CloneTask] voiceId={voice_id} completed successfully")
 
-        return {"voice_id": voice_id, "model_path": str(output_dir)}
+        return {"voice_id": voice_id, "model_path": str(output_dir), "sample_url": sample_rel_path}
 
     except Exception as exc:
         db.rollback()
+        print(f"[CloneTask] voiceId={voice_id} failed: {exc}")
         try:
             voice_repo = VoiceRepo(db)
             voice_repo.update_status(voice_id, -1, str(exc))

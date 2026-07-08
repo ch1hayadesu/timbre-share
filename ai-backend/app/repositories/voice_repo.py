@@ -47,6 +47,12 @@ class VoiceRepo:
                 voice.retry_count = (voice.retry_count or 0) + 1
             self.db.commit()
 
+    def update_sample_url(self, voice_id: int, sample_url: str):
+        voice = self.get_by_id(voice_id)
+        if voice:
+            voice.sample_url = sample_url
+            self.db.commit()
+
     def delete(self, voice_id: int, user_id: int) -> bool:
         voice = self.db.query(Voice).filter(Voice.voice_id == voice_id, Voice.user_id == user_id).first()
         if not voice:
