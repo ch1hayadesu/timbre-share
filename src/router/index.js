@@ -43,6 +43,18 @@ const routes = [
     component: () => import('@/views/VoiceMarketView.vue'),
     meta: { title: '音色市场', icon: 'cart' }
   },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/views/SettingsView.vue'),
+    meta: { title: '设置', icon: 'settings' }
+  },
+  {
+    path: '/help',
+    name: 'help',
+    component: () => import('@/views/HelpView.vue'),
+    meta: { title: '帮助', icon: 'help' }
+  },
 ]
 
 const router = createRouter({
