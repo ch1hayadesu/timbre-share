@@ -59,6 +59,36 @@ const { showModal } = useModal()
 const { showDrawer } = useDrawer()
 const { showToast } = useToast()
 
+// 当前正在播放的音频，确保同时只有一个在播
+const currentAudio = ref(null)
+
+function stopCurrentAudio() {
+  if (currentAudio.value) {
+    currentAudio.value.pause()
+    currentAudio.value.currentTime = 0
+    currentAudio.value = null
+  }
+}
+
+function playSample(voice) {
+  if (!voice.sample_url) {
+    showToast('warning', '该音色暂无试听样本')
+    return
+  }
+  stopCurrentAudio()
+  const audioUrl = '/audio/' + voice.sample_url.replace(/^\//, '')
+  const audio = new Audio(audioUrl)
+  audio.play().then(() => {
+    currentAudio.value = audio
+    showToast('success', '正在试听：' + voice.name)
+  }).catch(() => {
+    showToast('error', '音频加载失败，样本可能尚未生成')
+  })
+  audio.addEventListener('ended', () => {
+    currentAudio.value = null
+  })
+}
+
 const filter = ref('')
 const source = ref('all')
 const status = ref('all')
@@ -101,6 +131,12 @@ function applyFilters() {
 async function openDetail(id) {
   const v = await getVoiceDetail(id)
   if (!v) { showToast('warning', '音色不存在'); return }
+  const sampleBlock = v.sample_url
+    ? `<audio src="/audio/${v.sample_url.replace(/^\//, '')}" controls style="width:100%;height:36px;border-radius:8px;" preload="metadata"></audio>`
+    : `<div style="display:flex;align-items:center;gap:12px;">
+         <button onclick="event.stopPropagation()" style="width:40px;height:40px;border-radius:50%;background:var(--color-border-default);color:var(--color-text-disabled);border:none;cursor:not-allowed;">▶</button>
+         <span style="font-size:13px;color:var(--color-text-disabled);">暂无试听样本</span>
+       </div>`
   const content = `
     <div style="text-align:center;margin-bottom:24px;">
       <div style="height:100px;background:var(--gradient-card);border-radius:var(--radius-lg);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:3px;overflow:hidden;">
@@ -114,17 +150,10 @@ async function openDetail(id) {
       </div>
     </div>
     <div style="background:var(--color-bg-section);border-radius:var(--radius-lg);padding:16px;margin-bottom:20px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <span style="font-weight:600;font-size:14px;">🎵 试听样本</span>
-        <span style="font-size:12px;color:var(--color-text-secondary);margin-left:auto;">0:00 / 0:30</span>
       </div>
-      <div style="height:4px;border-radius:2px;background:var(--color-border-default);margin-bottom:12px;">
-        <div style="height:100%;border-radius:2px;background:var(--gradient-audio);width:60%;"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <button style="width:40px;height:40px;border-radius:50%;background:var(--color-primary-6);color:white;border:none;cursor:pointer;">▶</button>
-        <span style="font-size:13px;color:var(--color-text-secondary);">点击播放试听</span>
-      </div>
+      ${sampleBlock}
     </div>
     <div style="background:var(--color-bg-section);border-radius:var(--radius-md);padding:16px;">
       <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px;">音色信息</div>
@@ -141,7 +170,7 @@ async function openDetail(id) {
 }
 
 function handleAction({ type, voice }) {
-  if (type === 'preview') showToast('info', '试听功能演示中')
+  if (type === 'preview') playSample(voice)
   else if (type === 'share') {
     showModal('分享音色到平台', '<p style="font-size:14px;">确定要将该音色分享到公共平台吗？分享后其他用户可下载使用。</p>', async () => {
       try {

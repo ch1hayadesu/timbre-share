@@ -10,10 +10,10 @@
           <span class="voice-card-mode">{{ voice.mode }}</span>
         </div>
         <div class="voice-card-date">{{ voice.date }}</div>
-        <div v-if="showActions" class="voice-card-actions">
-          <BaseButton size="sm" @click.stop="onAction('preview')">▶ 试听</BaseButton>
-          <BaseButton v-if="voice.status === 'ready'" type="text" size="sm" @click.stop="onAction('share')">分享</BaseButton>
-          <BaseButton type="text" size="sm" style="color:var(--color-error)" @click.stop="onAction('delete')">删除</BaseButton>
+        <div v-if="showActions" class="voice-card-actions" @click.stop>
+          <BaseButton size="sm" @click="onAction('preview')">▶ 试听</BaseButton>
+          <BaseButton v-if="voice.status === 'ready'" type="text" size="sm" @click="onAction('share')">分享</BaseButton>
+          <BaseButton type="text" size="sm" style="color:var(--color-error)" @click="onAction('delete')">删除</BaseButton>
         </div>
       </div>
     </div>
@@ -60,6 +60,9 @@ function onAction(type) {
   font-weight: 600;
   color: var(--color-text-primary);
   margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .voice-card-meta {
@@ -85,5 +88,6 @@ function onAction(type) {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-wrap: wrap;
 }
 </style>
