@@ -32,6 +32,7 @@ class TtsService:
             speed=req.speed,
             volume=req.volume,
             pitch=req.pitch,
+            engine_name=req.engine,
         )
         synthesize_tts.delay(
             record_id=record.record_id,
@@ -40,6 +41,7 @@ class TtsService:
             speed=req.speed,
             volume=req.volume,
             pitch=req.pitch,
+            engine=req.engine,
         )
         return TtsRecordVO.model_validate(record)
 

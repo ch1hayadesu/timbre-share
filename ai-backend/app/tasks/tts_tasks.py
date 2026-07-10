@@ -21,7 +21,7 @@ VOICE_MAP = {
 
 @celery_app.task(bind=True, max_retries=2, default_retry_delay=5)
 def synthesize_tts(self, record_id: int, text: str, voice_id: int,
-                   speed: float, volume: int, pitch: int):
+                   speed: float, volume: int, pitch: int, engine: str | None = None):
     db = SessionLocal()
     try:
         tts_repo = TtsRepo(db)
@@ -36,7 +36,7 @@ def synthesize_tts(self, record_id: int, text: str, voice_id: int,
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         abs_path = loop.run_until_complete(
-            engine.synthesize(text, voice_name, speed, volume, pitch)
+            engine.synthesize(text, voice_name, speed, volume, pitch, engine=engine)
         )
         loop.close()
 

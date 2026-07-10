@@ -9,6 +9,7 @@ class TtsRequest(BaseModel):
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
     volume: int = Field(default=80, ge=0, le=100)
     pitch: int = Field(default=0, ge=-12, le=12)
+    engine: str | None = None
 
 
 class TtsRecordVO(BaseModel):
@@ -20,6 +21,7 @@ class TtsRecordVO(BaseModel):
     speed: float
     volume: int
     pitch: int
+    engine_name: str | None = None
     audio_url: str | None = None
     status: int
     created_at: datetime

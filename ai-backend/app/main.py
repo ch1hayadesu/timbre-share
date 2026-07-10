@@ -9,6 +9,7 @@ from app.config import settings
 from app.core.exceptions import AppException
 from app.core.response import app_exception_handler
 from app.api.v1 import router as v1_router
+from app.services.engine_registry import initialize_backends
 
 
 @asynccontextmanager
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
     Path(settings.data_dir, "audio", "tts").mkdir(parents=True, exist_ok=True)
     Path(settings.data_dir, "audio", "uploads").mkdir(parents=True, exist_ok=True)
     Path(settings.data_dir, "models").mkdir(parents=True, exist_ok=True)
+    initialize_backends()
     yield
 
 

@@ -58,6 +58,7 @@ class TtsRecord(Base):
     speed = Column(Float, nullable=False, default=1.0)
     volume = Column(Integer, nullable=False, default=80)
     pitch = Column(Integer, nullable=False, default=0)
+    engine_name = Column(String(50), nullable=True)
     audio_url = Column(String(500), nullable=True)
     status = Column(SmallInteger, nullable=False, default=0)
     error_message = Column(String(500), nullable=True)

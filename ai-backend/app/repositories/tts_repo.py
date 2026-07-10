@@ -18,7 +18,8 @@ class TtsRepo:
         return items, total
 
     def create(
-        self, user_id: int, voice_id: int, text: str, speed: float, volume: int, pitch: int
+        self, user_id: int, voice_id: int, text: str, speed: float, volume: int, pitch: int,
+        engine_name: str | None = None,
     ) -> TtsRecord:
         record = TtsRecord(
             user_id=user_id,
@@ -28,6 +29,7 @@ class TtsRepo:
             speed=speed,
             volume=volume,
             pitch=pitch,
+            engine_name=engine_name,
             status=0,
         )
         self.db.add(record)
