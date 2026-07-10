@@ -47,7 +47,11 @@
       </div>
       <div class="setting-row">
         <span class="setting-label">技术栈</span>
-        <span class="setting-value">FastAPI + Vue3 + MySQL + edge-tts</span>
+        <span class="setting-value">FastAPI + Vue3 + edge-tts</span>
+      </div>
+      <div class="setting-row" style="border:none;">
+        <span class="setting-label">GPT 模型</span>
+        <span class="setting-value">GPT-SoVITS（开源语音克隆模型）</span>
       </div>
       <div class="setting-row" style="border:none;">
         <span class="setting-label">项目</span>

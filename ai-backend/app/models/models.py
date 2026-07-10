@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, Integer, BigInteger, SmallInteger, String, Text, Float, ForeignKey, TIMESTAMP, JSON
@@ -9,7 +10,7 @@ from app.database import Base
 class User(Base):
     __tablename__ = "user"
 
-    user_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, primary_key=True, autoincrement=True)
     phone = Column(String(20), nullable=False, unique=True, index=True)
     membership_level = Column(SmallInteger, nullable=False, default=0)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
@@ -26,16 +27,19 @@ class User(Base):
 class Voice(Base):
     __tablename__ = "voice"
 
-    voice_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, ForeignKey("user.user_id"), nullable=False)
+    voice_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
     voice_name = Column(String(100), nullable=False)
     clone_mode = Column(SmallInteger, nullable=False, default=0)
+    tts_model = Column(String(50), nullable=True)
     status = Column(SmallInteger, nullable=False, default=0)
     source = Column(String(20), nullable=False, default="cloned")
-    source_share_id = Column(BigInteger, nullable=True)
+    source_share_id = Column(Integer, nullable=True)
     raw_audio_url = Column(String(500), nullable=True)
     model_path = Column(String(500), nullable=True)
     sample_url = Column(String(500), nullable=True)
+    description = Column(String(500), nullable=True)
+    avatar_url = Column(String(500), nullable=True)
     error_message = Column(String(500), nullable=True)
     retry_count = Column(SmallInteger, nullable=False, default=0)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
@@ -50,14 +54,15 @@ class Voice(Base):
 class TtsRecord(Base):
     __tablename__ = "tts_record"
 
-    record_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, ForeignKey("user.user_id"), nullable=False)
-    voice_id = Column(BigInteger, ForeignKey("voice.voice_id"), nullable=False)
+    record_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
+    voice_id = Column(Integer, ForeignKey("voice.voice_id"), nullable=False)
     text = Column(Text, nullable=False)
     text_length = Column(Integer, nullable=False, default=0)
     speed = Column(Float, nullable=False, default=1.0)
     volume = Column(Integer, nullable=False, default=80)
     pitch = Column(Integer, nullable=False, default=0)
+    tts_model = Column(String(50), nullable=True, default="edge-tts")
     audio_url = Column(String(500), nullable=True)
     status = Column(SmallInteger, nullable=False, default=0)
     error_message = Column(String(500), nullable=True)
@@ -70,8 +75,8 @@ class TtsRecord(Base):
 class ScriptDubTask(Base):
     __tablename__ = "script_dub_task"
 
-    task_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, ForeignKey("user.user_id"), nullable=False)
+    task_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
     script_name = Column(String(200), nullable=True)
     script_text = Column(Text, nullable=False)
     charset = Column(String(10), nullable=True)
@@ -90,9 +95,9 @@ class ScriptDubTask(Base):
 class VoiceShare(Base):
     __tablename__ = "voice_share"
 
-    share_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    voice_id = Column(BigInteger, ForeignKey("voice.voice_id", ondelete="CASCADE"), nullable=False, unique=True)
-    user_id = Column(BigInteger, ForeignKey("user.user_id"), nullable=False)
+    share_id = Column(Integer, primary_key=True, autoincrement=True)
+    voice_id = Column(Integer, ForeignKey("voice.voice_id", ondelete="CASCADE"), nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
     download_count = Column(Integer, nullable=False, default=0)
     status = Column(SmallInteger, nullable=False, default=1)
     audit_status = Column(SmallInteger, nullable=True)
@@ -108,10 +113,10 @@ class VoiceShare(Base):
 class VoiceDownload(Base):
     __tablename__ = "voice_download"
 
-    download_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    share_id = Column(BigInteger, ForeignKey("voice_share.share_id", ondelete="SET NULL"), nullable=True)
-    user_id = Column(BigInteger, ForeignKey("user.user_id"), nullable=False)
-    voice_id = Column(BigInteger, ForeignKey("voice.voice_id"), nullable=False)
+    download_id = Column(Integer, primary_key=True, autoincrement=True)
+    share_id = Column(Integer, ForeignKey("voice_share.share_id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
+    voice_id = Column(Integer, ForeignKey("voice.voice_id"), nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
 
     voice_share = relationship("VoiceShare", back_populates="voice_downloads")
@@ -122,7 +127,7 @@ class VoiceDownload(Base):
 class VerificationCode(Base):
     __tablename__ = "verification_code"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     phone = Column(String(20), nullable=False)
     code = Column(String(6), nullable=False)
     purpose = Column(SmallInteger, nullable=False, default=0)
@@ -134,8 +139,8 @@ class VerificationCode(Base):
 class Notification(Base):
     __tablename__ = "notification"
 
-    notify_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
+    notify_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=True)
     type = Column(SmallInteger, nullable=False, default=0)
@@ -143,3 +148,29 @@ class Notification(Base):
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
 
     user = relationship("User", back_populates="notifications")
+
+
+class VoiceBrowseHistory(Base):
+    __tablename__ = "voice_browse_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, ForeignKey("user.user_id"), nullable=False)
+    voice_id = Column(BigInteger, ForeignKey("voice.voice_id", ondelete="CASCADE"), nullable=False)
+    share_id = Column(BigInteger, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
+
+    voice = relationship("Voice")
+    user = relationship("User")
+
+
+class VoiceFavorite(Base):
+    __tablename__ = "voice_favorite"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, ForeignKey("user.user_id"), nullable=False)
+    voice_id = Column(BigInteger, ForeignKey("voice.voice_id", ondelete="CASCADE"), nullable=False)
+    share_id = Column(BigInteger, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
+
+    voice = relationship("Voice")
+    user = relationship("User")

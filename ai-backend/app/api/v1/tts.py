@@ -1,3 +1,4 @@
+from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -6,6 +7,7 @@ from app.core.dependencies import get_current_user_id
 from app.database import get_db
 from app.schemas.tts import TtsRequest
 from app.services.tts_service import TtsService
+from app.services import tts_engine
 
 router = APIRouter(prefix="/tts", tags=["TTS合成模块"])
 
@@ -41,3 +43,9 @@ def get_record(
 ):
     svc = TtsService(db)
     return ApiResponse.success(svc.get_record(record_id, user_id).model_dump(mode='json'))
+
+
+@router.get("/models")
+def list_models():
+    models = tts_engine.get_available_models()
+    return ApiResponse.success(models)

@@ -92,6 +92,7 @@ export async function createSynthesis(data) {
     speed: data.speed,
     volume: data.volume,
     pitch: data.pitch,
+    model: data.model || 'edge-tts',
   })
 }
 
@@ -128,17 +129,12 @@ export async function getSynthesisList(params = {}) {
 // ============================================================
 
 export async function getTTSVoiceOptions() {
-  const voices = await get('/voice/presets')
-  const ttsVoices = [
-    { value: 1, label: '晓晓（女声）' },
-    { value: 2, label: '云希（男声）' },
-    { value: 3, label: '晓伊（女声）' },
-    { value: 4, label: '云健（男声）' },
-    { value: 5, label: '云霞（女声）' },
-    { value: 6, label: '云扬（男声）' },
-    { value: 7, label: '晓北（东北话）' },
-  ]
-  return ttsVoices
+  const result = await get('/voice/presets')
+  const voices = result?.data || result || []
+  return voices.map(v => ({
+    value: v.voice_id,
+    label: v.voice_name,
+  }))
 }
 
 // ============================================================
@@ -146,19 +142,15 @@ export async function getTTSVoiceOptions() {
 // ============================================================
 
 export async function getDashboardStats() {
-  try {
-    const [voiceList, synthList] = await Promise.all([
-      get('/voice/list', { page: 1, page_size: 1 }),
-      get('/tts/history', { page: 1, page_size: 1 }),
-    ])
-    return {
-      voiceCount: voiceList?.pagination?.total || 0,
-      synthesisCount: synthList?.pagination?.total || 0,
-      scriptCount: 0,
-      downloadCount: 0,
-    }
-  } catch {
-    return { voiceCount: 0, synthesisCount: 0, scriptCount: 0, downloadCount: 0 }
+  const [voiceList, synthList] = await Promise.all([
+    get('/voice/list', { page: 1, page_size: 1 }),
+    get('/tts/history', { page: 1, page_size: 1 }),
+  ])
+  return {
+    voiceCount: voiceList?.pagination?.total || 0,
+    synthesisCount: synthList?.pagination?.total || 0,
+    scriptCount: 0,
+    downloadCount: 0,
   }
 }
 
@@ -173,6 +165,10 @@ export async function sendCode(phone) {
 export async function login(phone, code) {
   const result = await post('/user/login', { phone, code })
   return { token: result.token, user: result.user }
+}
+
+export async function getTTSModels() {
+  return get('/tts/models')
 }
 
 // ============================================================
@@ -207,6 +203,43 @@ export async function getHealth() {
 }
 
 // ============================================================
+//  浏览历史 & 收藏
+// ============================================================
+
+export async function recordView(voiceId, shareId) {
+  return post('/history/view', { voice_id: voiceId, share_id: shareId })
+}
+
+export async function getHistoryList(params = {}) {
+  const result = await get('/history/list', { page: params.page, page_size: params.pageSize })
+  if (result && result.items) {
+    return { items: result.items, total: result.total || 0, page: result.page || 1, pageSize: result.pageSize || 20 }
+  }
+  return { items: [], total: 0, page: 1, pageSize: 20 }
+}
+
+export async function addFavorite(voiceId, shareId) {
+  return post('/history/favorite/add', { voice_id: voiceId, share_id: shareId })
+}
+
+export async function removeFavorite(voiceId) {
+  return post('/history/favorite/remove', { voice_id: voiceId })
+}
+
+export async function getFavoriteList(params = {}) {
+  const result = await get('/history/favorite/list', { page: params.page, page_size: params.pageSize })
+  if (result && result.items) {
+    return { items: result.items, total: result.total || 0, page: result.page || 1, pageSize: result.pageSize || 20 }
+  }
+  return { items: [], total: 0, page: 1, pageSize: 20 }
+}
+
+export async function checkFavorite(voiceId) {
+  const result = await get('/history/favorite/check', { voice_id: voiceId })
+  return result ? result.favorited : false
+}
+
+// ============================================================
 //  内部字段映射
 // ============================================================
 
@@ -237,8 +270,11 @@ function normalizeVoice(v) {
     voice_name: v.voice_name,
     raw_audio_url: v.raw_audio_url,
     sample_url: v.sample_url,
+    description: v.description,
+    avatar_url: v.avatar_url,
     error_message: v.error_message,
     clone_mode: v.clone_mode,
+    tts_model: v.tts_model,
   }
 }
 

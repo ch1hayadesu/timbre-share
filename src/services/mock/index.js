@@ -313,6 +313,7 @@ export async function createSynthesis(data) {
     voice: data.voice,
     params: data.params,
     status: data.status || 'success',
+    model: data.model || 'edge-tts',
     date: now(),
   }
   synthesisRecords.unshift(record)
@@ -330,6 +331,18 @@ export async function createSynthesis(data) {
 export async function getTTSVoiceOptions() {
   await delay()
   return clone(ttsVoiceOptions)
+}
+
+/**
+ * 获取可用的 TTS 合成模型
+ * @returns {Promise<Array<{name: string, display_name: string}>>}
+ */
+export async function getTTSModels() {
+  await delay()
+  return [
+    { name: 'edge-tts', display_name: 'Edge TTS（标准）' },
+    { name: 'moss-tts', display_name: 'MOSS-TTS-Nano（GPT模型）' },
+  ]
 }
 
 // ============================================================
@@ -394,6 +407,17 @@ export async function getTTSRecord(recordId) {
 export async function pollTask(taskId) {
   return getTTSRecord(taskId)
 }
+
+// ============================================================
+//  浏览历史 & 收藏 (mock)
+// ============================================================
+
+export async function recordView() { await delay(); return {} }
+export async function getHistoryList(params = {}) { await delay(); return { items: [], total: 0, page: 1, pageSize: 20 } }
+export async function addFavorite() { await delay(); return {} }
+export async function removeFavorite() { await delay(); return {} }
+export async function getFavoriteList(params = {}) { await delay(); return { items: [], total: 0, page: 1, pageSize: 20 } }
+export async function checkFavorite() { await delay(); return false }
 
 // ============================================================
 //  常量映射

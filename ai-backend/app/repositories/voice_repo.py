@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -30,9 +31,10 @@ class VoiceRepo:
         return self.db.query(Voice).filter(Voice.source == "preset").all()
 
     def create(self, user_id: int, voice_name: str, clone_mode: int = 0,
-               raw_audio_url: str | None = None) -> Voice:
+               raw_audio_url: str | None = None,
+               tts_model: str | None = None) -> Voice:
         voice = Voice(user_id=user_id, voice_name=voice_name, clone_mode=clone_mode,
-                      status=0, raw_audio_url=raw_audio_url)
+                      status=0, raw_audio_url=raw_audio_url, tts_model=tts_model)
         self.db.add(voice)
         self.db.commit()
         self.db.refresh(voice)

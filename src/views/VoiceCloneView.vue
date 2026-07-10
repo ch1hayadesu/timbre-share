@@ -9,6 +9,16 @@
 
     <!-- Step 1: Upload -->
     <Card v-show="phase === 'upload'">
+      <div class="form-group">
+        <label>合成模型</label>
+        <select class="base-select wide" v-model="selectedModel">
+          <option v-for="m in availableModels" :key="m.name" :value="m.name">
+            {{ m.display_name }}
+          </option>
+        </select>
+        <p v-if="modelNotice" class="form-notice">{{ modelNotice }}</p>
+      </div>
+
       <div style="margin-bottom:20px;">
         <label style="font-size:14px;font-weight:500;display:block;margin-bottom:8px;">克隆模式</label>
         <div style="display:flex;gap:16px;">
@@ -71,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Card from '@/components/Card.vue'
 import BaseButton from '@/components/BaseButton.vue'
@@ -80,6 +90,7 @@ import UploadZone from '@/components/UploadZone.vue'
 import StepIndicator from '@/components/StepIndicator.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import AiLoading from '@/components/AiLoading.vue'
+import { getTTSModels } from '@/services'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
@@ -99,9 +110,34 @@ const cloneMode = ref('instant')
 const cloneFailed = ref(false)
 const errorMessage = ref('')
 const sampleUrl = ref('')
+const selectedModel = ref('edge-tts')
+const availableModels = ref([])
+const modelNotice = ref('')
 
 let pollTimer = null
 let safetyTimer = null
+
+const modelNotices = {
+  'edge-tts': '标准模型，稳定快速，支持多种语言。',
+  'moss-tts': 'GPT模型，表现力更丰富。',
+}
+
+onMounted(async () => {
+  try {
+    const resp = await getTTSModels()
+    availableModels.value = resp?.data || resp || []
+    if (availableModels.value.length > 0) {
+      selectedModel.value = availableModels.value[0].name
+      modelNotice.value = modelNotices[selectedModel.value] || ''
+    }
+  } catch (err) {
+    showToast('error', '加载模型列表失败：' + err.message)
+  }
+})
+
+function onModelChange() {
+  modelNotice.value = modelNotices[selectedModel.value] || ''
+}
 
 function triggerUpload() {
   fileInput.value?.click()
@@ -132,16 +168,50 @@ async function startClone() {
     formData.append('file', selectedFile.value)
     formData.append('voice_name', cloneName.value)
     formData.append('clone_mode', cloneMode.value === 'deep' ? '1' : '0')
+    formData.append('model', selectedModel.value)
 
     const resp = await fetch('/api/v1/voice/clone', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken') || '1'}` },
       body: formData,
     })
+    if (!resp.ok) {
+      const text = await resp.text()
+      throw new Error(`服务器错误: ${text.substring(0, 100)}`)
+    }
     const data = await resp.json()
     if (data.code !== 0) throw new Error(data.message)
 
-    const voiceId = data.data.voice_id
+    const voice = data.data
+    const voiceId = voice.voice_id
+
+    if (voice.status === 1) {
+      progress.value = 100
+      statusText.value = '克隆完成！'
+      updateSteps(3)
+      if (voice.sample_url) {
+        sampleUrl.value = '/audio/' + voice.sample_url
+      }
+      setTimeout(() => {
+        phase.value = 'result'
+        showToast('success', '音色克隆成功！')
+      }, 500)
+      return
+    }
+
+    if (voice.status === -1) {
+      progress.value = 100
+      statusText.value = '克隆失败'
+      cloneFailed.value = true
+      errorMessage.value = voice.error_message || '未知错误'
+      updateSteps(2)
+      setTimeout(() => {
+        phase.value = 'result'
+        showToast('error', '音色克隆失败：' + (voice.error_message || '未知错误'))
+      }, 500)
+      return
+    }
+
     progress.value = 30
     statusText.value = '克隆已提交，AI 正在处理...'
     updateSteps(1)
@@ -154,32 +224,32 @@ async function startClone() {
         })
         const detail = await detailResp.json()
         if (detail.code !== 0) return
-        const voice = detail.data
-        const st = voice.status
+        const v = detail.data
+        const st = v.status
         if (st === 1) {
           clearInterval(pollTimer)
           clearTimeout(safetyTimer)
           progress.value = 100
           statusText.value = '克隆完成！'
           updateSteps(3)
-          if (voice.sample_url) {
-            sampleUrl.value = '/audio/' + voice.sample_url
+          if (v.sample_url) {
+            sampleUrl.value = '/audio/' + v.sample_url
           }
           setTimeout(() => {
             phase.value = 'result'
             showToast('success', '音色克隆成功！')
           }, 500)
-        } else if (st === -1 || st === 2) {
+        } else if (st === -1) {
           clearInterval(pollTimer)
           clearTimeout(safetyTimer)
           progress.value = 100
           statusText.value = '克隆失败'
           cloneFailed.value = true
-          errorMessage.value = voice.error_message || '未知错误'
+          errorMessage.value = v.error_message || '未知错误'
           updateSteps(2)
           setTimeout(() => {
             phase.value = 'result'
-            showToast('error', '音色克隆失败：' + (voice.error_message || '未知错误'))
+            showToast('error', '音色克隆失败：' + (v.error_message || '未知错误'))
           }, 500)
         } else {
           const pct = Math.min(30 + (pollCount || 0) * 5, 80)
@@ -231,6 +301,30 @@ function resetClone() {
 </script>
 
 <style scoped>
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 8px;
+}
+.form-notice {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+.base-select.wide {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  outline: none;
+}
 .file-info { margin-top: var(--space-4); }
 
 .file-info-box {

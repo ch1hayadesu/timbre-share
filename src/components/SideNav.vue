@@ -112,6 +112,15 @@ const CartIcon = {
   }
 }
 
+const ClockIcon = {
+  render() {
+    return h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' }, [
+      h('circle', { cx: '12', cy: '12', r: '10' }),
+      h('polyline', { points: '12 6 12 12 16 14' })
+    ])
+  }
+}
+
 const mainItems = [
   { path: '/', label: '工作台', icon: HomeIcon },
   { path: '/voices', label: '我的音色', icon: MusicIcon },
@@ -119,6 +128,7 @@ const mainItems = [
   { path: '/tts', label: 'TTS合成', icon: VolumeIcon },
   { path: '/script', label: '剧本配音', icon: FileIcon },
   { path: '/market', label: '音色市场', icon: CartIcon },
+  { path: '/history', label: '历史/收藏', icon: ClockIcon },
 ]
 </script>
 

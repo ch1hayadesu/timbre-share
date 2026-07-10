@@ -1,3 +1,4 @@
+from __future__ import annotations
 class ErrorCode:
     # Success
     SUCCESS = 0
@@ -46,7 +47,9 @@ class ErrorCode:
     VOICE_FILE_ERROR = 60004
 
 
-ERROR_MESSAGES: dict[int, str] = {
+from typing import Dict
+
+ERROR_MESSAGES: Dict[int, str] = {
     ErrorCode.SUCCESS: "success",
     ErrorCode.PARAM_ERROR: "请求参数错误",
     ErrorCode.NOT_FOUND: "资源不存在",

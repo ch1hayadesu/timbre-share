@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import datetime
 
 from pydantic import BaseModel
@@ -15,6 +16,7 @@ class VoiceVO(BaseModel):
     raw_audio_url: str | None = None
     error_message: str | None = None
     retry_count: int = 0
+    tts_model: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -23,6 +25,7 @@ class VoiceVO(BaseModel):
 class CloneRequest(BaseModel):
     voice_name: str
     clone_mode: int = 0
+    model: str | None = None
 
 
 class VoiceNameUpdate(BaseModel):

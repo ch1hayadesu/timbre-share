@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 import re
 from pathlib import Path
@@ -85,7 +86,9 @@ async def _synthesize_all(lines, voice_mapping):
     return await asyncio.gather(*tasks)
 
 
-def _combine_audio(audio_paths: list[str], output: str):
+from typing import List
+
+def _combine_audio(audio_paths: List[str], output: str):
     data = bytearray()
     for p in audio_paths:
         path = Path(p)

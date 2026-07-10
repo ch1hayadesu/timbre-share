@@ -1,3 +1,4 @@
+from __future__ import annotations
 from fastapi import Depends, Header
 from sqlalchemy.orm import Session
 

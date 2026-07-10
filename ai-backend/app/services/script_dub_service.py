@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Optional, Dict, List, Tuple
+
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import NotFoundError, ParamError
@@ -19,9 +22,9 @@ class ScriptDubService:
         self,
         user_id: int,
         script_text: str,
-        script_name: str | None = None,
-        charset: str | None = None,
-        voice_mapping: dict[str, int] | None = None,
+        script_name: Optional[str] = None,
+        charset: Optional[str] = None,
+        voice_mapping: Optional[Dict[str, int]] = None,
     ) -> ScriptDubVO:
         if not script_text:
             raise ParamError("剧本内容不能为空")
@@ -40,7 +43,7 @@ class ScriptDubService:
         process_dub_task.delay(task_id=task.task_id)
         return ScriptDubVO.model_validate(task)
 
-    def list_tasks(self, user_id: int, page: int, page_size: int) -> tuple[list[ScriptDubVO], int]:
+    def list_tasks(self, user_id: int, page: int, page_size: int) -> Tuple[List[ScriptDubVO], int]:
         items, total = self.repo.get_by_user(user_id, page, page_size)
         return [ScriptDubVO.model_validate(t) for t in items], total
 

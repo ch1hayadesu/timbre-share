@@ -1,4 +1,6 @@
+from __future__ import annotations
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -9,6 +11,7 @@ class TtsRequest(BaseModel):
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
     volume: int = Field(default=80, ge=0, le=100)
     pitch: int = Field(default=0, ge=-12, le=12)
+    model: str | None = Field(default=None, description="TTS model backend name")
 
 
 class TtsRecordVO(BaseModel):
@@ -20,6 +23,7 @@ class TtsRecordVO(BaseModel):
     speed: float
     volume: int
     pitch: int
+    tts_model: str | None = "edge-tts"
     audio_url: str | None = None
     status: int
     created_at: datetime

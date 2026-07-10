@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pathlib import Path
 import uuid
 
@@ -51,6 +52,7 @@ async def create_clone(
     file: UploadFile,
     voice_name: str = Form(...),
     clone_mode: int = Form(0),
+    model: str | None = Form(None),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -63,7 +65,7 @@ async def create_clone(
     raw_url = f"uploads/{dest.name}"
 
     svc = VoiceService(db)
-    result = svc.create_clone_task(user_id, voice_name, clone_mode, raw_url)
+    result = await svc.create_clone_task(user_id, voice_name, clone_mode, raw_url, model)
     return ApiResponse.success(result.model_dump(mode='json'))
 
 

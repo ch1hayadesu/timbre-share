@@ -1,4 +1,5 @@
-from typing import Any
+from __future__ import annotations
+from typing import Any, Optional, Dict
 
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -10,7 +11,7 @@ class ScriptDubRepo:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_by_id(self, task_id: int) -> ScriptDubTask | None:
+    def get_by_id(self, task_id: int) -> Optional[ScriptDubTask]:
         return self.db.query(ScriptDubTask).filter(ScriptDubTask.task_id == task_id).first()
 
     def get_by_user(self, user_id: int, page: int = 1, page_size: int = 12):
@@ -23,9 +24,9 @@ class ScriptDubRepo:
         self,
         user_id: int,
         script_text: str,
-        script_name: str | None = None,
-        charset: str | None = None,
-        voice_mapping: dict[str, int] | None = None,
+        script_name: Optional[str] = None,
+        charset: Optional[str] = None,
+        voice_mapping: Optional[Dict[str, int]] = None,
     ) -> ScriptDubTask:
         task = ScriptDubTask(
             user_id=user_id,

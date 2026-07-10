@@ -1,3 +1,4 @@
+from __future__ import annotations
 from app.models.models import (
     User,
     Voice,
@@ -7,6 +8,8 @@ from app.models.models import (
     VoiceDownload,
     VerificationCode,
     Notification,
+    VoiceBrowseHistory,
+    VoiceFavorite,
 )
 
 __all__ = [
@@ -18,4 +21,6 @@ __all__ = [
     "VoiceDownload",
     "VerificationCode",
     "Notification",
+    "VoiceBrowseHistory",
+    "VoiceFavorite",
 ]

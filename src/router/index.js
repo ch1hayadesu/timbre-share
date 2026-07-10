@@ -44,6 +44,12 @@ const routes = [
     meta: { title: '音色市场', icon: 'cart' }
   },
   {
+    path: '/history',
+    name: 'history',
+    component: () => import('@/views/HistoryView.vue'),
+    meta: { title: '浏览历史', icon: 'clock' }
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/SettingsView.vue'),

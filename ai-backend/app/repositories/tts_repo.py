@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -18,7 +19,8 @@ class TtsRepo:
         return items, total
 
     def create(
-        self, user_id: int, voice_id: int, text: str, speed: float, volume: int, pitch: int
+        self, user_id: int, voice_id: int, text: str, speed: float, volume: int, pitch: int,
+        tts_model: str | None = None,
     ) -> TtsRecord:
         record = TtsRecord(
             user_id=user_id,
@@ -28,6 +30,7 @@ class TtsRepo:
             speed=speed,
             volume=volume,
             pitch=pitch,
+            tts_model=tts_model or "edge-tts",
             status=0,
         )
         self.db.add(record)

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from app.core.error_code import ERROR_MESSAGES
 
 

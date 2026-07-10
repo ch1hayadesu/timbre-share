@@ -27,6 +27,17 @@
           </div>
 
           <div class="form-group">
+            <label>合成模型</label>
+            <select class="base-select wide" v-model="selectedModel">
+              <option v-for="m in availableModels" :key="m.name" :value="m.name">
+                {{ m.display_name }}
+                <template v-if="m.requires_env_setup"> ⚠️ 需配置</template>
+              </option>
+            </select>
+            <p v-if="modelNotice" class="form-notice">{{ modelNotice }}</p>
+          </div>
+
+          <div class="form-group">
             <div class="slider-label">
               <span>语速</span>
               <span class="slider-value">{{ ttsSpeed }}x</span>
@@ -80,13 +91,15 @@ import Card from '@/components/Card.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseTag from '@/components/BaseTag.vue'
 import AudioPlayer from '@/components/AudioPlayer.vue'
-import { getTTSVoiceOptions, createSynthesis } from '@/services'
+import { getTTSVoiceOptions, createSynthesis, getTTSModels } from '@/services'
 import { useToast } from '@/composables/useToast'
 
 const { showToast } = useToast()
 
 const ttsText = ref('大家好，欢迎使用音色共享平台。这是一个基于AI技术的语音合成工具，可以帮助你快速将文字转换为自然流畅的语音。只需选择你喜欢的音色，输入文本，点击合成即可获得高质量的MP3音频文件。')
 const selectedVoice = ref(1)
+const selectedModel = ref('edge-tts')
+const availableModels = ref([])
 const ttsSpeed = ref(1.0)
 const ttsVolume = ref(80)
 const ttsPitch = ref(0)
@@ -108,7 +121,27 @@ async function loadVoiceOptions() {
   }
 }
 
-onMounted(() => loadVoiceOptions())
+async function loadModels() {
+  try {
+    availableModels.value = await getTTSModels()
+    if (availableModels.value.length > 0) {
+      selectedModel.value = availableModels.value[0].name
+    }
+  } catch (err) {
+    availableModels.value = [{ name: 'edge-tts', display_name: 'Edge TTS (默认)' }]
+  }
+}
+
+const modelNotice = computed(() => {
+  const m = availableModels.value.find(x => x.name === selectedModel.value)
+  if (m && m.requires_env_setup) return m.requires_env_setup
+  return ''
+})
+
+onMounted(() => {
+  loadVoiceOptions()
+  loadModels()
+})
 
 const charCount = computed(() => ttsText.value.length)
 
@@ -129,6 +162,7 @@ async function synthesize() {
       speed: ttsSpeed.value,
       volume: ttsVolume.value,
       pitch: ttsPitch.value,
+      model: selectedModel.value,
     })
     const result = await pollTaskResult(rec.record_id)
     audioUrl.value = result.audio_url ? `/audio/${result.audio_url}` : ''
@@ -263,6 +297,12 @@ async function pollTaskResult(taskId, maxWait = 60) {
 }
 
 .slider::-webkit-slider-thumb:hover { border-color: var(--color-primary-7); }
+
+.form-notice {
+  font-size: var(--font-size-xs);
+  color: var(--color-warning);
+  margin-top: var(--space-1);
+}
 
 .full-width {
   width: 100%;

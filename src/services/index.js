@@ -35,6 +35,9 @@ export const createSynthesis    = service.createSynthesis
 // TTS 音色选项
 export const getTTSVoiceOptions = service.getTTSVoiceOptions
 
+// TTS 模型列表
+export const getTTSModels = service.getTTSModels
+
 // 工作台统计
 export const getDashboardStats  = service.getDashboardStats
 
@@ -50,6 +53,14 @@ export const pollTask = service.pollTask
 export const createScriptDubTask = service.createScriptDubTask
 export const getScriptDubList = service.getScriptDubList
 export const getScriptDubDetail = service.getScriptDubDetail
+
+// 浏览历史 & 收藏
+export const recordView = service.recordView
+export const getHistoryList = service.getHistoryList
+export const addFavorite = service.addFavorite
+export const removeFavorite = service.removeFavorite
+export const getFavoriteList = service.getFavoriteList
+export const checkFavorite = service.checkFavorite
 
 // 常量映射
 export { statusMap, sourceMap } from './types'
