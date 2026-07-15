@@ -5,10 +5,16 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import('@/views/LoginView.vue'),
-    meta: { title: '登录', guest: true }
+    meta: { title: '登录', guest: true, layout: 'blank' }
   },
   {
     path: '/',
+    name: 'landing',
+    component: () => import('@/views/LandingView.vue'),
+    meta: { title: '音色共享平台', guest: true, layout: 'landing' }
+  },
+  {
+    path: '/dashboard',
     name: 'home',
     component: () => import('@/views/HomeView.vue'),
     meta: { title: '工作台', icon: 'home' }
@@ -44,12 +50,6 @@ const routes = [
     meta: { title: '音色市场', icon: 'cart' }
   },
   {
-    path: '/history',
-    name: 'history',
-    component: () => import('@/views/HistoryView.vue'),
-    meta: { title: '浏览历史', icon: 'clock' }
-  },
-  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/SettingsView.vue'),
@@ -61,6 +61,43 @@ const routes = [
     component: () => import('@/views/HelpView.vue'),
     meta: { title: '帮助', icon: 'help' }
   },
+  // ========== Admin Routes ==========
+  {
+    path: '/admin/login',
+    name: 'adminLogin',
+    component: () => import('@/views/LoginView.vue'),
+    props: { mode: 'admin' },
+    meta: { admin: true, layout: 'blank' }
+  },
+  {
+    path: '/admin',
+    redirect: '/admin/dashboard',
+    meta: { admin: true }
+  },
+  {
+    path: '/admin/dashboard',
+    name: 'adminDashboard',
+    component: () => import('@/views/admin/DashboardView.vue'),
+    meta: { admin: true, title: '仪表盘' }
+  },
+  {
+    path: '/admin/users',
+    name: 'adminUsers',
+    component: () => import('@/views/admin/UserManageView.vue'),
+    meta: { admin: true, title: '用户管理' }
+  },
+  {
+    path: '/admin/voices',
+    name: 'adminVoices',
+    component: () => import('@/views/admin/VoiceManageView.vue'),
+    meta: { admin: true, title: '音色管理' }
+  },
+  {
+    path: '/admin/logs',
+    name: 'adminLogs',
+    component: () => import('@/views/admin/LogsView.vue'),
+    meta: { admin: true, title: '操作日志' }
+  },
 ]
 
 const router = createRouter({
@@ -69,14 +106,30 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('authToken')
-  if (!token && !to.meta?.guest) {
-    next('/login')
-  } else if (token && to.path === '/login') {
-    next('/')
-  } else {
-    next()
+  const authToken = localStorage.getItem('authToken')
+  const adminToken = localStorage.getItem('adminToken')
+
+  // 普通用户已登录访问 /login -> 重定向到 dashboard
+  if (authToken && to.path === '/login') {
+    next('/dashboard')
+    return
   }
+
+  // 管理员路由守卫
+  if (to.meta?.admin && to.path !== '/admin/login') {
+    if (!adminToken) {
+      next('/admin/login')
+      return
+    }
+  }
+
+  // 管理员已登录访问 /admin/login -> 重定向到 admin dashboard
+  if (adminToken && to.path === '/admin/login') {
+    next('/admin/dashboard')
+    return
+  }
+
+  next()
 })
 
 export default router

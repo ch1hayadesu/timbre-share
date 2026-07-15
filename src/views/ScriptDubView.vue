@@ -23,15 +23,23 @@
       <BaseButton type="primary" size="lg" :disabled="!hasScriptFile" @click="parseRoles">下一步：配置音色</BaseButton>
     </Card>
 
-    <!-- Voice Mapping -->
+    <!-- Voice & Emotion Mapping -->
     <Card v-if="phase === 'mapping'">
-      <h3 class="panel-title">🎤 为每个角色选择音色</h3>
-      <p class="panel-desc">已识别到 {{ roleOptions.length }} 个角色，请为每个角色分配不同的 TTS 音色</p>
+      <h3 class="panel-title">🎤 为每个角色选择音色与情感</h3>
+      <p class="panel-desc">已识别到 {{ roleOptions.length }} 个角色，请为每个角色配置音色和朗读情感</p>
       <div class="voice-mapping-list">
         <div v-for="role in roleOptions" :key="role.name" class="voice-mapping-row">
           <span class="mapping-role">{{ role.name }}</span>
           <select class="base-select mapping-select" v-model="role.voiceId">
             <option v-for="v in ttsVoiceOptions" :key="v.value" :value="v.value">{{ v.label }}</option>
+          </select>
+          <select class="base-select mapping-select emotion-select" v-model="role.emotion">
+            <option value="">默认</option>
+            <option value="happy">快乐 😊</option>
+            <option value="sad">悲伤 😢</option>
+            <option value="angry">生气 😠</option>
+            <option value="fear">恐惧 😨</option>
+            <option value="surprise">惊讶 😲</option>
           </select>
         </div>
       </div>
@@ -76,11 +84,56 @@
         <BaseButton @click="resetDub">上传新剧本</BaseButton>
       </div>
     </Card>
+
+    <!-- 配音记录 -->
+    <div class="section-title" style="margin-top:32px;">配音记录</div>
+    <Card style="padding:0;overflow:hidden;">
+      <table class="synthesis-table" v-if="dubHistory.items.length">
+        <thead>
+          <tr>
+            <th>剧本名称</th>
+            <th>角色数</th>
+            <th>状态</th>
+            <th>时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in dubHistory.items" :key="item.id">
+            <td class="text-cell">{{ item.scriptName }}</td>
+            <td>{{ item.roleCount }}个角色</td>
+            <td>
+              <StatusBadge :type="item.status === 'success' ? 'ready' : item.status === 'processing' ? 'processing' : 'failed'">
+                {{ item.status === 'success' ? '成功' : item.status === 'processing' ? '处理中' : '失败' }}
+              </StatusBadge>
+            </td>
+            <td class="param-cell">{{ item.date }}</td>
+            <td class="action-cell">
+              <template v-if="item.status === 'success'">
+                <BaseButton type="default" size="sm" @click="playDubAudio(item)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  播放
+                </BaseButton>
+                <BaseButton type="default" size="sm" @click="downloadDubAudio(item)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  下载
+                </BaseButton>
+              </template>
+              <BaseButton v-else type="default" size="sm" @click="$router.push('/script')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+                重新配音
+              </BaseButton>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-else style="padding:32px;text-align:center;color:var(--color-text-disabled);">暂无配音记录</div>
+    </Card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import Card from '@/components/Card.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseTag from '@/components/BaseTag.vue'
@@ -89,10 +142,14 @@ import StepIndicator from '@/components/StepIndicator.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import AiLoading from '@/components/AiLoading.vue'
 import AudioPlayer from '@/components/AudioPlayer.vue'
-import { createScriptDubTask, getScriptDubDetail, getTTSVoiceOptions } from '@/services'
+import { createScriptDubTask, getScriptDubDetail, getScriptDubList, getTTSVoiceOptions } from '@/services'
 import { useToast } from '@/composables/useToast'
+import { useAuth } from '@/composables/useAuth'
+import { incrementScriptCount } from '@/services/statsCounter'
+import StatusBadge from '@/components/StatusBadge.vue'
 
 const { showToast } = useToast()
+const { requireAuth } = useAuth()
 
 const phase = ref('upload')
 const hasScriptFile = ref(false)
@@ -108,14 +165,37 @@ const roleCount = ref(0)
 const audioUrl = ref('')
 const roleOptions = ref([])
 const ttsVoiceOptions = ref([])
+const dubHistory = reactive({ items: [] })
 const lineRoleRe = /^(.+?)[：:]/
 let scriptText = ''
 
+const FALLBACK_VOICES = [
+  { value: 1, label: '标准女声' },
+  { value: 2, label: '沉稳男声' },
+  { value: 3, label: '活泼少女' },
+  { value: 4, label: '磁性大叔' },
+  { value: 5, label: '知性女声' },
+  { value: 6, label: '新闻播音' },
+  { value: 7, label: '动漫正太' },
+]
+
 onMounted(async () => {
-  try { ttsVoiceOptions.value = await getTTSVoiceOptions() } catch (_) {}
+  try { ttsVoiceOptions.value = await getTTSVoiceOptions() } catch (_) { /* guest mode: skip */ }
+  if (!ttsVoiceOptions.value.length) ttsVoiceOptions.value = FALLBACK_VOICES
+  loadDubHistory()
 })
 
-function triggerScriptUpload() { scriptInput.value?.click() }
+async function loadDubHistory() {
+  try {
+    const result = await getScriptDubList({ page: 1, pageSize: 10 })
+    dubHistory.items = result.items
+  } catch (_) { /* guest mode: skip */ }
+}
+
+function triggerScriptUpload() {
+  if (!requireAuth(triggerScriptUpload)) return
+  scriptInput.value?.click()
+}
 
 function onScriptSelect(e) {
   const file = e.target.files?.[0]
@@ -136,6 +216,7 @@ function onScriptSelect(e) {
 }
 
 function parseRoles() {
+  if (!requireAuth(parseRoles)) return
   if (!scriptText.trim()) { showToast('warning', '请选择有效的剧本文件'); return }
   const names = new Set()
   for (const line of scriptText.split('\n')) {
@@ -144,7 +225,7 @@ function parseRoles() {
   }
   if (names.size === 0) { showToast('warning', '未识别到角色，请检查剧本格式'); return }
 
-  const opts = ttsVoiceOptions.value.length ? ttsVoiceOptions.value : [{ value: 1, label: '默认' }]
+  const opts = ttsVoiceOptions.value.length ? ttsVoiceOptions.value : FALLBACK_VOICES
   const usedVoices = new Set()
   roleOptions.value = Array.from(names).map((name, i) => {
     let v = opts[i % opts.length]
@@ -153,20 +234,23 @@ function parseRoles() {
       attempts++; v = opts[(i + attempts) % opts.length]
     }
     usedVoices.add(v.value)
-    return { name, voiceId: v.value }
+    return { name, voiceId: v.value, emotion: '' }
   })
   phase.value = 'mapping'
 }
 
 async function startDub() {
+  if (!requireAuth(startDub)) return
   if (!scriptText.trim()) { showToast('warning', '请选择有效的剧本文件'); return }
 
   const voiceMapping = {}
+  const emotionMapping = {}
   const used = new Set()
   for (const role of roleOptions.value) {
     if (used.has(role.voiceId)) { showToast('warning', `${role.name} 的音色与其他角色重复，请选择不同的音色`); return }
     used.add(role.voiceId)
     voiceMapping[role.name] = role.voiceId
+    if (role.emotion) emotionMapping[role.name] = role.emotion
   }
 
   loading.value = true
@@ -175,7 +259,7 @@ async function startDub() {
   scriptProgress.value = 0
 
   try {
-    const task = await createScriptDubTask({ script_text: scriptText, voice_mapping: voiceMapping })
+    const task = await createScriptDubTask({ script_text: scriptText, voice_mapping: voiceMapping, emotion_mapping: Object.keys(emotionMapping).length ? emotionMapping : undefined })
     const result = await pollTaskResult(task.task_id)
     renderResult(result)
   } catch (err) {
@@ -227,6 +311,8 @@ function renderResult(result) {
   roleCount.value = roles.value.length
   audioUrl.value = result.output_url ? `/audio/${result.output_url}` : ''
   phase.value = 'result'
+  incrementScriptCount()
+  loadDubHistory()
   showToast('success', '剧本配音生成完成！')
 }
 
@@ -240,6 +326,33 @@ function resetDub() {
   audioUrl.value = ''
   roleOptions.value = []
   if (scriptInput.value) scriptInput.value.value = ''
+}
+
+function playDubAudio(item) {
+  const url = item.outputUrl
+  if (!url) {
+    showToast('warning', '该记录暂无音频文件')
+    return
+  }
+  const audio = new Audio('/audio/' + url.replace(/^\//, ''))
+  audio.play().catch(() => {
+    showToast('error', '音频加载失败')
+  })
+}
+
+function downloadDubAudio(item) {
+  const url = item.outputUrl
+  if (!url) {
+    showToast('warning', '该记录暂无音频文件')
+    return
+  }
+  const fullUrl = '/audio/' + url.replace(/^\//, '')
+  const a = document.createElement('a')
+  a.href = fullUrl
+  a.download = url.split('/').pop() || 'dub_output.mp3'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
 }
 </script>
 
@@ -356,4 +469,55 @@ function resetDub() {
   font-size: var(--font-size-base);
 }
 .mapping-select { flex: 1; }
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.synthesis-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.synthesis-table th {
+  height: 48px;
+  padding: 0 var(--space-4);
+  text-align: left;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-section);
+  border-bottom: 1px solid var(--color-border-light);
+}
+.synthesis-table td {
+  height: 48px;
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-base);
+  color: var(--color-text-body);
+  border-bottom: 1px solid var(--color-border-light);
+}
+.synthesis-table tr:hover td {
+  background: var(--color-bg-hover);
+}
+.text-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.param-cell {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.action-cell {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 48px;
+}
 </style>

@@ -6,7 +6,7 @@
       </svg>
     </button>
 
-    <router-link to="/" class="topnav-logo">
+    <router-link to="/dashboard" class="topnav-logo">
       <div class="topnav-logo-icon">♪</div>
       <span>音色共享平台</span>
     </router-link>
@@ -41,7 +41,7 @@
 defineEmits(['toggle-sidebar'])
 
 const navItems = [
-  { path: '/', label: '首页' },
+  { path: '/dashboard', label: '工作台' },
   { path: '/clone', label: '音色克隆' },
   { path: '/tts', label: 'TTS合成' },
   { path: '/script', label: '剧本配音' },

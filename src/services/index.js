@@ -22,6 +22,10 @@ export const createVoice        = service.createVoice
 export const updateVoice        = service.updateVoice
 export const deleteVoice        = service.deleteVoice
 export const shareVoice         = service.shareVoice
+export const downloadVoiceModel = service.downloadVoiceModel
+export const getCloneHistory    = service.getCloneHistory
+export const downloadCloneHistoryModel = service.downloadCloneHistoryModel
+export const addCloneHistoryToMyVoices = service.addCloneHistoryToMyVoices
 
 // 音色市场
 export const getMarketVoiceList = service.getMarketVoiceList
@@ -53,14 +57,6 @@ export const pollTask = service.pollTask
 export const createScriptDubTask = service.createScriptDubTask
 export const getScriptDubList = service.getScriptDubList
 export const getScriptDubDetail = service.getScriptDubDetail
-
-// 浏览历史 & 收藏
-export const recordView = service.recordView
-export const getHistoryList = service.getHistoryList
-export const addFavorite = service.addFavorite
-export const removeFavorite = service.removeFavorite
-export const getFavoriteList = service.getFavoriteList
-export const checkFavorite = service.checkFavorite
 
 // 常量映射
 export { statusMap, sourceMap } from './types'

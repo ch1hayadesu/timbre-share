@@ -46,7 +46,72 @@ export async function deleteVoice(id) {
 }
 
 export async function shareVoice(id) {
-  return post(`/share/publish/${id}`)
+  return post(`/share/publish/${id}`, {})
+}
+
+export async function downloadVoiceModel(voiceId) {
+  const token = localStorage.getItem('token')
+  const resp = await fetch(`/api/v1/voice/download-model/${voiceId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!resp.ok) {
+    const errData = await resp.json().catch(() => ({ message: '下载失败' }))
+    throw new Error(errData.message || errData.detail || '下载失败')
+  }
+  const blob = await resp.blob()
+  const disposition = resp.headers.get('Content-Disposition') || ''
+  const match = disposition.match(/filename="?(.+?)"?$/i)
+  const filename = match ? match[1] : `voice_model_${voiceId}.zip`
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+export async function getCloneHistory(params = {}) {
+  const query = { page: params.page || 1, page_size: params.pageSize || 10 }
+  const result = await get('/voice/clone-history', query)
+  if (result && result.items) {
+    const p = result.pagination || {}
+    return {
+      items: result.items.map(normalizeCloneHistory),
+      total: p.total || 0,
+      page: p.page || 1,
+      pageSize: p.pageSize || 10,
+    }
+  }
+  return { items: [], total: 0, page: 1, pageSize: 10 }
+}
+
+export async function downloadCloneHistoryModel(historyId) {
+  const token = localStorage.getItem('token')
+  const resp = await fetch(`/api/v1/voice/clone-history/download-model/${historyId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!resp.ok) {
+    const errData = await resp.json().catch(() => ({ message: '下载失败' }))
+    throw new Error(errData.message || errData.detail || '下载失败')
+  }
+  const blob = await resp.blob()
+  const disposition = resp.headers.get('Content-Disposition') || ''
+  const match = disposition.match(/filename="?(.+?)"?$/i)
+  const filename = match ? match[1] : `voice_model_${historyId}.zip`
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+export async function addCloneHistoryToMyVoices(historyId) {
+  return post(`/voice/clone-history/${historyId}/add-to-my-voices`)
 }
 
 // ============================================================
@@ -87,11 +152,11 @@ export function getMarketVoicePreviewUrl(shareId) {
 
 export async function createSynthesis(data) {
   return post('/tts/synthesize', {
-    voice_id: data.voice_id,
+    voice_id: data.voiceId || data.voice_id,
     text: data.text,
-    speed: data.speed,
-    volume: data.volume,
-    pitch: data.pitch,
+    speed: data.speed || 1.0,
+    volume: data.volume || 80,
+    pitch: data.pitch || 0,
     model: data.model || 'edge-tts',
   })
 }
@@ -129,12 +194,26 @@ export async function getSynthesisList(params = {}) {
 // ============================================================
 
 export async function getTTSVoiceOptions() {
-  const result = await get('/voice/presets')
-  const voices = result?.data || result || []
-  return voices.map(v => ({
+  const [presetsResult, userVoicesResult] = await Promise.all([
+    get('/voice/presets'),
+    get('/voice/list', { page: 1, page_size: 50, status: 1 }),
+  ])
+  const presets = (presetsResult?.data || presetsResult || []).map(v => ({
     value: v.voice_id,
     label: v.voice_name,
+    category: 'preset',
   }))
+  let userVoices = []
+  if (userVoicesResult && userVoicesResult.items) {
+    userVoices = userVoicesResult.items
+      .filter(v => v.source !== 'preset')
+      .map(v => ({
+        value: v.voice_id,
+        label: v.voice_name,
+        category: 'user',
+      }))
+  }
+  return [...presets, ...userVoices]
 }
 
 // ============================================================
@@ -142,14 +221,15 @@ export async function getTTSVoiceOptions() {
 // ============================================================
 
 export async function getDashboardStats() {
-  const [voiceList, synthList] = await Promise.all([
+  const [voiceList, synthList, dubList] = await Promise.all([
     get('/voice/list', { page: 1, page_size: 1 }),
     get('/tts/history', { page: 1, page_size: 1 }),
+    get('/script-dub/list', { page: 1, page_size: 1 }),
   ])
   return {
     voiceCount: voiceList?.pagination?.total || 0,
     synthesisCount: synthList?.pagination?.total || 0,
-    scriptCount: 0,
+    scriptCount: dubList?.pagination?.total || 0,
     downloadCount: 0,
   }
 }
@@ -189,7 +269,12 @@ export async function getScriptDubList(params = {}) {
   const result = await get('/script-dub/list', query)
   if (result && result.items) {
     const p = result.pagination || {}
-    return { items: result.items, total: p.total || 0, page: p.page || 1, pageSize: p.pageSize || 10 }
+    return {
+      items: result.items.map(normalizeScriptDub),
+      total: p.total || 0,
+      page: p.page || 1,
+      pageSize: p.pageSize || 10,
+    }
   }
   return { items: [], total: 0, page: 1, pageSize: 10 }
 }
@@ -200,43 +285,6 @@ export async function getScriptDubDetail(taskId) {
 
 export async function getHealth() {
   return get('/health')
-}
-
-// ============================================================
-//  浏览历史 & 收藏
-// ============================================================
-
-export async function recordView(voiceId, shareId) {
-  return post('/history/view', { voice_id: voiceId, share_id: shareId })
-}
-
-export async function getHistoryList(params = {}) {
-  const result = await get('/history/list', { page: params.page, page_size: params.pageSize })
-  if (result && result.items) {
-    return { items: result.items, total: result.total || 0, page: result.page || 1, pageSize: result.pageSize || 20 }
-  }
-  return { items: [], total: 0, page: 1, pageSize: 20 }
-}
-
-export async function addFavorite(voiceId, shareId) {
-  return post('/history/favorite/add', { voice_id: voiceId, share_id: shareId })
-}
-
-export async function removeFavorite(voiceId) {
-  return post('/history/favorite/remove', { voice_id: voiceId })
-}
-
-export async function getFavoriteList(params = {}) {
-  const result = await get('/history/favorite/list', { page: params.page, page_size: params.pageSize })
-  if (result && result.items) {
-    return { items: result.items, total: result.total || 0, page: result.page || 1, pageSize: result.pageSize || 20 }
-  }
-  return { items: [], total: 0, page: 1, pageSize: 20 }
-}
-
-export async function checkFavorite(voiceId) {
-  const result = await get('/history/favorite/check', { voice_id: voiceId })
-  return result ? result.favorited : false
 }
 
 // ============================================================
@@ -270,11 +318,25 @@ function normalizeVoice(v) {
     voice_name: v.voice_name,
     raw_audio_url: v.raw_audio_url,
     sample_url: v.sample_url,
-    description: v.description,
-    avatar_url: v.avatar_url,
     error_message: v.error_message,
     clone_mode: v.clone_mode,
     tts_model: v.tts_model,
+  }
+}
+
+function normalizeCloneHistory(h) {
+  return {
+    id: h.id,               // clone_history 表主键
+    historyId: h.id,        // 克隆历史记录ID，用于下载模型
+    voiceId: h.voice_id,    // 原音色ID（音色删除后为null）
+    name: h.voice_name,
+    status: h.status === 1 ? 'ready' : h.status === 0 ? 'processing' : h.status === -1 ? 'failed' : 'ready',
+    mode: h.clone_mode === 1 ? '深度克隆' : '即时克隆',
+    date: h.created_at ? h.created_at.split('T')[0] : '',
+    sample_url: h.sample_url,
+    error_message: h.error_message,
+    clone_mode: h.clone_mode,
+    tts_model: h.tts_model,
   }
 }
 
@@ -283,9 +345,25 @@ function normalizeSynthesis(s) {
     id: s.id || s.record_id,
     text: s.text || s.input_text,
     voice: s.voice_name || '',
-    params: '',
-    status: 'success',
+    params: `speed=${s.speed || 1.0} volume=${s.volume || 80} pitch=${s.pitch || 0}`,
+    status: s.status === 1 ? 'success' : s.status === 0 ? 'processing' : 'failed',
     date: s.created_at || '',
+    audio_url: s.audio_url,
+    record_id: s.record_id,
+    type: 'tts',
+  }
+}
+
+function normalizeScriptDub(d) {
+  return {
+    id: d.id || d.task_id,
+    scriptName: d.script_name || '未命名剧本',
+    roleCount: d.role_count || 0,
+    status: d.status === 1 ? 'success' : d.status === 0 ? 'processing' : 'failed',
+    date: d.created_at || '',
+    outputUrl: d.output_url || '',
+    scriptText: d.script_text || '',
+    voiceMapping: d.voice_mapping || null,
   }
 }
 

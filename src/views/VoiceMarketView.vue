@@ -31,9 +31,6 @@
           <div class="market-card-actions">
             <button v-if="previewId !== voice.id" class="btn-sm-preview" @click.stop="preview(voice)">▶ 试听</button>
             <button v-else class="btn-sm-preview" @click.stop="previewId = null">关闭</button>
-            <button class="btn-sm-preview" @click.stop="toggleFav(voice)" :style="{color: favStates[voice.id] ? '#e53e3e' : ''}">
-              {{ favStates[voice.id] ? '♥' : '♡' }} 收藏
-            </button>
             <BaseButton type="primary" size="sm" @click.stop="download(voice)">下载</BaseButton>
           </div>
           <audio v-if="previewId === voice.id" :src="previewUrlFor(voice)" controls style="width:100%;height:40px;margin-top:12px;" />
@@ -53,19 +50,21 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import BaseButton from '@/components/BaseButton.vue'
 import WaveAnimation from '@/components/WaveAnimation.vue'
-import { getMarketVoiceList, downloadMarketVoice, getMarketVoicePreviewUrl, addFavorite, removeFavorite, checkFavorite, recordView } from '@/services'
+import { getMarketVoiceList, downloadMarketVoice, getMarketVoicePreviewUrl } from '@/services'
+import { incrementDownloadCount } from '@/services/statsCounter'
 import { useModal } from '@/composables/useModal'
 import { useToast } from '@/composables/useToast'
+import { useAuth } from '@/composables/useAuth'
 
 const { showModal } = useModal()
 const { showToast } = useToast()
+const { requireAuth } = useAuth()
 
 const filter = ref('')
 const sort = ref('newest')
 const page = ref(1)
 const pageSize = ref(6)
 const previewId = ref(null)
-const favStates = reactive({})
 
 const marketList = reactive({ items: [], total: 0, page: 1, pageSize: 6 })
 const loading = ref(false)
@@ -84,9 +83,8 @@ async function loadMarketVoices() {
     marketList.total = result.total
     marketList.page = result.page
     marketList.pageSize = result.pageSize
-    checkFavStates()
   } catch (err) {
-    showToast('error', '加载市场列表失败：' + err.message)
+    if (!err.message?.includes('401')) showToast('error', '加载市场列表失败：' + err.message)
   } finally {
     loading.value = false
   }
@@ -99,32 +97,7 @@ watch([filter, sort], () => {
   loadMarketVoices()
 })
 
-async function toggleFav(voice) {
-  try {
-    if (favStates[voice.id]) {
-      await removeFavorite(voice.voice_id || voice.id)
-      favStates[voice.id] = false
-      showToast('success', '已取消收藏')
-    } else {
-      await addFavorite(voice.voice_id || voice.id, voice.share_id)
-      favStates[voice.id] = true
-      showToast('success', '已收藏')
-    }
-  } catch (err) {
-    showToast('error', err.message)
-  }
-}
-
-async function checkFavStates() {
-  for (const voice of marketList.items) {
-    try {
-      favStates[voice.id] = await checkFavorite(voice.voice_id || voice.id)
-    } catch (_) {}
-  }
-}
-
 function openDetail(voice) {
-  recordView(voice.voice_id || voice.id, voice.share_id).catch(() => {})
   const content = `
     <div style="text-align:center;margin-bottom:20px;">
       <div style="width:100%;height:80px;background:var(--gradient-card);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:16px;overflow:hidden;">
@@ -149,9 +122,11 @@ function openDetail(voice) {
 }
 
 async function download(voice) {
+  if (!requireAuth(() => download(voice))) return
   showToast('info', `正在下载「${voice.name}」...`)
   try {
     await downloadMarketVoice(voice.id)
+    incrementDownloadCount()
     showToast('success', `「${voice.name}」已下载到你的语音库！`)
     loadMarketVoices()
   } catch (err) {
@@ -162,6 +137,7 @@ async function download(voice) {
 const previewLoading = ref(false)
 
 async function preview(voice) {
+  if (!requireAuth(() => preview(voice))) return
   if (previewLoading.value) return
   previewLoading.value = true
   try {

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<defs>
+<linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f093fb" stop-opacity="1"/><stop offset="40%" stop-color="#e070a0" stop-opacity="1"/><stop offset="100%" stop-color="#c05070" stop-opacity="1"/></linearGradient>
+<radialGradient id="glow2" cx="0.7" cy="0.3" r="0.6"><stop offset="0%" stop-color="rgba(255,255,255,0.12)" stop-opacity="1"/><stop offset="100%" stop-color="rgba(255,255,255,0)" stop-opacity="1"/></radialGradient>
+</defs>
+<rect width="400" height="300" fill="url(#bg2)"/>
+<rect width="400" height="300" fill="url(#glow2)"/>
+<circle cx="370" cy="40" r="70" fill="rgba(255,255,255,0.04)"/>
+<circle cx="30" cy="280" r="50" fill="rgba(255,255,255,0.04)"/>
+<!-- base box -->
+<rect x="155" y="200" width="90" height="65" rx="6" fill="rgba(255,255,255,0.2)"/>
+<rect x="148" y="258" width="104" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
+<!-- turntable -->
+<ellipse cx="200" cy="215" rx="35" ry="10" fill="rgba(40,20,40,0.3)"/>
+<ellipse cx="200" cy="214" rx="28" ry="7" fill="rgba(255,255,255,0.15)"/>
+<circle cx="200" cy="214" r="4" fill="rgba(255,255,255,0.4)"/>
+<!-- tonearm -->
+<path d="M200 214 L175 170 L185 168" stroke="rgba(255,255,255,0.5)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="175" cy="170" r="4" fill="rgba(255,255,255,0.3)"/>
+<!-- horn (gramophone bell) - large elegant shape -->
+<path d="M185 168 Q190 140 210 110 Q230 80 270 65 Q310 55 330 70 Q310 70 285 82 Q255 100 235 125 Q218 150 210 168 Z" 
+      fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+<!-- horn inner rings -->
+<path d="M195 165 Q200 142 218 115 Q240 88 270 75" stroke="rgba(255,255,255,0.1)" stroke-width="1" fill="none"/>
+<path d="M202 162 Q208 142 225 118 Q242 96 265 82" stroke="rgba(255,255,255,0.08)" stroke-width="1" fill="none"/>
+<!-- music notes -->
+<g fill="rgba(255,255,255,0.35)" font-family="serif" font-size="20">
+  <text x="310" y="70" transform="rotate(15,310,70)">♪</text>
+  <text x="330" y="110" transform="rotate(-10,330,110)">♫</text>
+  <text x="60" y="80" transform="rotate(-20,60,80)">♪</text>
+  <text x="80" y="120" transform="rotate(10,80,120)">♫</text>
+</g>
+<circle cx="340" cy="50" r="2.5" fill="rgba(255,255,255,0.4)"/>
+<circle cx="50" cy="180" r="2" fill="rgba(255,255,255,0.3)"/>
+</svg>

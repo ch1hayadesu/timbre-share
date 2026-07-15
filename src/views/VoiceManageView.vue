@@ -50,14 +50,16 @@ import { ref, reactive, onMounted } from 'vue'
 import BaseButton from '@/components/BaseButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import VoiceCard from './VoiceCard.vue'
-import { getVoiceList, getVoiceDetail, shareVoice, deleteVoice, statusMap, sourceMap } from '@/services'
+import { getVoiceList, getVoiceDetail, shareVoice, deleteVoice, downloadVoiceModel, statusMap, sourceMap } from '@/services'
 import { useModal } from '@/composables/useModal'
 import { useDrawer } from '@/composables/useDrawer'
 import { useToast } from '@/composables/useToast'
+import { useAuth } from '@/composables/useAuth'
 
 const { showModal } = useModal()
 const { showDrawer } = useDrawer()
 const { showToast } = useToast()
+const { requireAuth } = useAuth()
 
 // 当前正在播放的音频，确保同时只有一个在播
 const currentAudio = ref(null)
@@ -115,7 +117,7 @@ async function loadVoices() {
     voiceList.page = result.page
     voiceList.pageSize = result.pageSize
   } catch (err) {
-    showToast('error', '加载音色列表失败：' + err.message)
+    if (!err.message?.includes('401')) showToast('error', '加载音色列表失败：' + err.message)
   } finally {
     loading.value = false
   }
@@ -170,7 +172,12 @@ async function openDetail(id) {
 }
 
 function handleAction({ type, voice }) {
+  if (!requireAuth()) return
   if (type === 'preview') playSample(voice)
+  else if (type === 'download-model') {
+    downloadVoiceModel(voice.id)
+    showToast('success', '正在下载模型文件...')
+  }
   else if (type === 'share') {
     showModal('分享音色到平台', '<p style="font-size:14px;">确定要将该音色分享到公共平台吗？分享后其他用户可下载使用。</p>', async () => {
       try {

@@ -2,36 +2,28 @@
   <div>
     <div class="page-header">
       <h1 class="page-title">工作台</h1>
-      <p class="page-desc">欢迎回来，小明！以下是你的音色创作概览。</p>
+      <p class="page-desc">欢迎回来！以下是你的音色创作概览。</p>
     </div>
 
-    <!-- Stat Cards -->
     <div class="stat-grid">
-      <Card v-for="stat in stats" :key="stat.label" class="stat-card">
-        <div class="stat-card-icon" :class="stat.color">
-          <span v-html="stat.icon"></span>
+      <div v-for="s in statCards" :key="s.label" class="stat-card" :style="{ background: s.bg }">
+        <div class="stat-card-header">
+          <div class="stat-card-icon">{{ s.icon }}</div>
         </div>
-        <div class="stat-card-label">{{ stat.label }}</div>
-        <div class="stat-card-value">{{ stat.value }}</div>
-        <div class="stat-card-change" :class="stat.changeType">{{ stat.change }}</div>
-      </Card>
+        <div class="stat-card-value">{{ s.value }}</div>
+        <div class="stat-card-label">{{ s.label }}</div>
+      </div>
     </div>
 
-    <!-- Quick Actions -->
     <div class="section-title">快捷操作</div>
     <div class="quick-grid">
-      <Card v-for="action in quickActions" :key="action.label" clickable @click="$router.push(action.path)">
-        <div class="quick-card-content">
-          <div class="quick-card-icon" :class="action.color">
-            <span v-html="action.icon"></span>
-          </div>
-          <div class="quick-card-title">{{ action.label }}</div>
-          <div class="quick-card-desc">{{ action.desc }}</div>
-        </div>
-      </Card>
+      <div v-for="a in actionCards" :key="a.label" class="quick-card" :style="{ background: a.bg }" @click="$router.push(a.path)">
+        <div class="quick-card-layer"></div>
+        <div class="quick-card-label">{{ a.label }}</div>
+        <div class="quick-card-desc">{{ a.desc }}</div>
+      </div>
     </div>
 
-    <!-- Recent Voices -->
     <div class="section-title">
       最近音色
       <span class="section-title-link" @click="$router.push('/voices')">查看全部 →</span>
@@ -40,7 +32,44 @@
       <VoiceCard v-for="voice in recentVoices" :key="voice.id" :voice="voice" :show-actions="false" />
     </div>
 
-    <!-- Recent Synthesis -->
+    <div class="section-title" style="margin-top:32px;">克隆历史</div>
+    <Card style="padding:0;overflow:hidden;">
+      <table class="synthesis-table" v-if="cloneHistory.items.length">
+        <thead>
+          <tr>
+            <th>音色名称</th>
+            <th>克隆模式</th>
+            <th>状态</th>
+            <th>时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in cloneHistory.items" :key="item.id">
+            <td>{{ item.name }}</td>
+            <td>{{ item.mode }}</td>
+            <td>
+              <StatusBadge :type="item.status === 'ready' ? 'ready' : 'failed'">
+                {{ item.status === 'ready' ? '就绪' : '失败' }}
+              </StatusBadge>
+            </td>
+            <td class="param-cell">{{ item.date }}</td>
+            <td class="action-cell">
+              <BaseButton v-if="item.status === 'ready'" type="default" size="sm" @click="downloadModel(item)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                下载模型
+              </BaseButton>
+              <BaseButton type="default" size="sm" @click="previewVoice(item)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                试听
+              </BaseButton>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-else style="padding:32px;text-align:center;color:var(--color-text-disabled);">暂无克隆记录，<a href="/clone" style="color:var(--color-primary-6);">去克隆音色 →</a></div>
+    </Card>
+
     <div class="section-title" style="margin-top:32px;">最近合成记录</div>
     <Card style="padding:0;overflow:hidden;">
       <table class="synthesis-table">
@@ -65,177 +94,291 @@
               </StatusBadge>
             </td>
             <td class="param-cell">{{ item.date }}</td>
-            <td>
+            <td class="action-cell">
               <template v-if="item.status === 'success'">
-                <BaseButton type="text" size="sm">▶ 播放</BaseButton>
-                <BaseButton type="text" size="sm">⬇ 下载</BaseButton>
+                <BaseButton type="default" size="sm" @click="playAudio(item.audio_url)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  播放
+                </BaseButton>
+                <BaseButton type="default" size="sm" @click="$router.push('/tts')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  下载
+                </BaseButton>
               </template>
-              <BaseButton v-else type="text" size="sm">重新生成</BaseButton>
+              <BaseButton v-else type="default" size="sm" @click="$router.push('/tts')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+                重新生成
+              </BaseButton>
             </td>
           </tr>
         </tbody>
       </table>
+      <div v-if="!synthesisList.items.length" style="padding:32px;text-align:center;color:var(--color-text-disabled);">暂无合成记录，<a href="/tts" style="color:var(--color-primary-6);">去 TTS 合成 →</a></div>
+    </Card>
+
+    <div class="section-title" style="margin-top:32px;">剧本配音记录</div>
+    <Card style="padding:0;overflow:hidden;">
+      <table class="synthesis-table" v-if="scriptDubList.items.length">
+        <thead>
+          <tr>
+            <th>剧本名称</th>
+            <th>角色数</th>
+            <th>状态</th>
+            <th>时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in scriptDubList.items" :key="item.id">
+            <td class="text-cell">{{ item.scriptName }}</td>
+            <td>{{ item.roleCount }}个角色</td>
+            <td>
+              <StatusBadge :type="item.status === 'success' ? 'ready' : item.status === 'processing' ? 'processing' : 'failed'">
+                {{ item.status === 'success' ? '成功' : item.status === 'processing' ? '处理中' : '失败' }}
+              </StatusBadge>
+            </td>
+            <td class="param-cell">{{ item.date }}</td>
+            <td class="action-cell">
+              <template v-if="item.status === 'success'">
+                <BaseButton type="default" size="sm" @click="playAudio(item.outputUrl)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  播放
+                </BaseButton>
+                <BaseButton type="default" size="sm" @click="$router.push('/script')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  下载
+                </BaseButton>
+              </template>
+              <BaseButton v-else type="default" size="sm" @click="$router.push('/script')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+                重新配音
+              </BaseButton>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-else style="padding:32px;text-align:center;color:var(--color-text-disabled);">暂无剧本配音记录，<a href="/script" style="color:var(--color-primary-6);">去剧本配音 →</a></div>
     </Card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import Card from '@/components/Card.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import VoiceCard from './VoiceCard.vue'
-import { getVoiceList, getSynthesisList, getDashboardStats } from '@/services'
+import { getVoiceList, getSynthesisList, getScriptDubList, getCloneHistory, downloadCloneHistoryModel, addCloneHistoryToMyVoices } from '@/services'
+import { getStats } from '@/services/statsCounter'
 import { useToast } from '@/composables/useToast'
 
 const { showToast } = useToast()
 
 const recentVoices = ref([])
 const synthesisList = reactive({ items: [] })
-const dashboardStats = ref({ voiceCount: 0, synthesisCount: 0, scriptCount: 0, downloadCount: 0 })
+const scriptDubList = reactive({ items: [] })
+const cloneHistory = reactive({ items: [] })
 
 async function loadData() {
   try {
-    const [voiceResult, synthResult, stats] = await Promise.all([
+    const [voiceResult, synthResult, dubResult, cloneResult] = await Promise.all([
       getVoiceList({ page: 1, pageSize: 4 }),
       getSynthesisList({ page: 1, pageSize: 5 }),
-      getDashboardStats(),
+      getScriptDubList({ page: 1, pageSize: 5 }),
+      getCloneHistory({ page: 1, pageSize: 5 }),
     ])
     recentVoices.value = voiceResult.items
     synthesisList.items = synthResult.items
-    dashboardStats.value = stats
+    scriptDubList.items = dubResult.items
+    cloneHistory.items = cloneResult.items
   } catch (err) {
-    showToast('error', '加载工作台数据失败：' + err.message)
+    if (!err.message?.includes('401')) showToast('error', '加载工作台数据失败：' + err.message)
   }
+}
+
+async function downloadModel(voice) {
+  try {
+    showToast('info', '正在将音色添加到「我的音色」...')
+    await addCloneHistoryToMyVoices(voice.historyId)
+    showToast('success', '已添加到「我的音色」，正在下载模型文件...')
+    await downloadCloneHistoryModel(voice.historyId)
+  } catch (err) {
+    showToast('error', '操作失败：' + (err.message || '未知错误'))
+  }
+}
+
+function playAudio(url) {
+  if (!url) {
+    showToast('warning', '该记录暂无音频文件')
+    return
+  }
+  const audio = new Audio('/audio/' + url.replace(/^\//, ''))
+  audio.play().catch(() => {
+    showToast('error', '音频加载失败')
+  })
+}
+
+function previewVoice(voice) {
+  playAudio(voice.sample_url)
 }
 
 onMounted(() => loadData())
 
-const stats = computed(() => [
-  {
-    label: '我的音色', value: String(dashboardStats.value.voiceCount),
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
-    color: 'purple', change: '↑ 较上月 +3', changeType: 'up'
-  },
-  {
-    label: '合成次数', value: String(dashboardStats.value.synthesisCount),
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-    color: 'green', change: '↑ 较上月 +12', changeType: 'up'
-  },
-  {
-    label: '剧本配音', value: String(dashboardStats.value.scriptCount),
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
-    color: 'blue', change: '↑ 较上月 +5', changeType: 'up'
-  },
-  {
-    label: '下载音色', value: String(dashboardStats.value.downloadCount),
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
-    color: 'amber', change: '↑ 较上月 +2', changeType: 'up'
-  },
-])
+const stats = getStats()
 
-const quickActions = [
+const statCards = [
   {
-    label: '克隆音色', desc: '上传音频，AI生成专属音色', path: '/clone',
-    icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>',
-    color: 'clone'
+    label: '我的音色', value: String(stats.voiceCount),
+    icon: '🎤',
+    bg: 'linear-gradient(135deg, #f5f0ff 0%, #ede5ff 100%)'
   },
   {
-    label: 'TTS合成', desc: '文本转语音，一键生成MP3', path: '/tts',
-    icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
-    color: 'tts'
+    label: '合成次数', value: String(stats.synthesisCount),
+    icon: '🔊',
+    bg: 'linear-gradient(135deg, #e8faf0 0%, #d4f5e3 100%)'
   },
   {
-    label: '剧本配音', desc: '上传剧本，AI智能多人配音', path: '/script',
-    icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
-    color: 'script'
+    label: '剧本配音', value: String(stats.scriptCount),
+    icon: '🎬',
+    bg: 'linear-gradient(135deg, #e8f0fe 0%, #d4e3fd 100%)'
   },
   {
-    label: '音色市场', desc: '探索社区共享的优质音色', path: '/market',
-    icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>',
-    color: 'market'
+    label: '下载音色', value: String(stats.downloadCount),
+    icon: '📥',
+    bg: 'linear-gradient(135deg, #fef3e8 0%, #fde8d4 100%)'
+  },
+]
+
+const actionCards = [
+  {
+    label: '音色克隆', desc: '上传音频，AI生成专属音色',
+    path: '/clone',
+    bg: 'url(/quick-bg/mic.svg) center/cover no-repeat'
+  },
+  {
+    label: 'TTS 合成', desc: '文本转语音，一键生成MP3',
+    path: '/tts',
+    bg: 'url(/quick-bg/gramophone.svg) center/cover no-repeat'
+  },
+  {
+    label: '剧本配音', desc: '上传剧本，AI智能多人配音',
+    path: '/script',
+    bg: 'url(/quick-bg/stage.svg) center/cover no-repeat'
+  },
+  {
+    label: '音色市场', desc: '探索社区共享的优质音色',
+    path: '/market',
+    bg: 'url(/quick-bg/music-store.svg) center/cover no-repeat'
   },
 ]
 </script>
 
 <style scoped>
-.stat-card-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 36px;
+}
+.stat-card {
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card-header {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--space-3);
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
 }
-
-.stat-card-icon.purple { background: var(--color-bg-selected); color: var(--color-primary-6); }
-.stat-card-icon.green { background: #ECFDF5; color: var(--color-success); }
-.stat-card-icon.blue { background: #EFF6FF; color: var(--color-link); }
-.stat-card-icon.amber { background: #FFFBEB; color: var(--color-warning); }
-
-.stat-card-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-}
-
+.stat-card-icon { font-size: 28px; line-height: 1; }
 .stat-card-value {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  line-height: 1.3;
+  font-size: 36px;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1.1;
+  margin-bottom: 4px;
 }
-
-.stat-card-change {
-  font-size: var(--font-size-xs);
-  margin-top: var(--space-1);
+.stat-card-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: space-between;
 }
+.section-title-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: #667eea;
+  cursor: pointer;
+}
+.section-title-link:hover { text-decoration: underline; }
 
-.stat-card-change.up { color: var(--color-success); }
-.stat-card-change.down { color: var(--color-error); }
-
-.quick-card-content {
-  text-align: center;
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 36px;
+}
+.quick-card {
+  border-radius: 16px;
+  padding: 28px 24px;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 140px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
+  justify-content: flex-end;
 }
-
-.quick-card-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.quick-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.2);
 }
-
-.quick-card-icon.clone { background: var(--color-bg-selected); color: var(--color-primary-6); }
-.quick-card-icon.tts { background: #EFF6FF; color: var(--color-link); }
-.quick-card-icon.script { background: #ECFDF5; color: var(--color-success); }
-.quick-card-icon.market { background: #FFFBEB; color: var(--color-warning); }
-
-.quick-card-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-primary);
+.quick-card-layer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.35) 100%);
+  transition: background 0.2s;
 }
-
+.quick-card:hover .quick-card-layer { background: linear-gradient(to top, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.25) 100%); }
+.quick-card-label {
+  position: relative;
+  z-index: 1;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
 .quick-card-desc {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+}
+
+.voice-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .synthesis-table {
   width: 100%;
   border-collapse: collapse;
 }
-
 .synthesis-table th {
   height: 48px;
   padding: 0 var(--space-4);
@@ -246,7 +389,6 @@ const quickActions = [
   background: var(--color-bg-section);
   border-bottom: 1px solid var(--color-border-light);
 }
-
 .synthesis-table td {
   height: 48px;
   padding: 0 var(--space-4);
@@ -254,20 +396,24 @@ const quickActions = [
   color: var(--color-text-body);
   border-bottom: 1px solid var(--color-border-light);
 }
-
 .synthesis-table tr:hover td {
   background: var(--color-bg-hover);
 }
-
 .text-cell {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .param-cell {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+}
+
+.action-cell {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 48px;
 }
 </style>

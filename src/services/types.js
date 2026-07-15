@@ -33,6 +33,18 @@
  * @property {string}  params - 合成参数描述
  * @property {'success'|'failed'} status - 状态
  * @property {string}  date   - 合成时间 YYYY-MM-DD HH:mm
+ * @property {'tts'|'script_dub'} type - 合成类型
+ * @property {string}  audio_url - 音频文件 URL
+ */
+
+/**
+ * @typedef {Object} ScriptDubRecord
+ * @property {number}  id          - 记录 ID
+ * @property {string}  scriptName  - 剧本名称
+ * @property {number}  roleCount   - 角色数量
+ * @property {'success'|'processing'|'failed'} status - 状态
+ * @property {string}  date        - 配音时间 YYYY-MM-DD HH:mm
+ * @property {string}  outputUrl   - 输出音频地址
  */
 
 /**

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<defs>
+<linearGradient id="bg4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#43e97b" stop-opacity="1"/><stop offset="50%" stop-color="#38c970" stop-opacity="1"/><stop offset="100%" stop-color="#2ea860" stop-opacity="1"/></linearGradient>
+<radialGradient id="glow4" cx="0.3" cy="0.3" r="0.7"><stop offset="0%" stop-color="rgba(255,255,255,0.12)" stop-opacity="1"/><stop offset="100%" stop-color="rgba(255,255,255,0)" stop-opacity="1"/></radialGradient>
+</defs>
+<rect width="400" height="300" fill="url(#bg4)"/>
+<rect width="400" height="300" fill="url(#glow4)"/>
+<circle cx="380" cy="50" r="80" fill="rgba(255,255,255,0.04)"/>
+<circle cx="20" cy="260" r="60" fill="rgba(255,255,255,0.04)"/>
+<!-- building facade -->
+<rect x="100" y="70" width="200" height="200" rx="6" fill="rgba(255,255,255,0.15)"/>
+<rect x="100" y="70" width="200" height="8" rx="4" fill="rgba(255,255,255,0.08)"/>
+<!-- roof -->
+<path d="M95 70 L200 35 L305 70 Z" fill="rgba(255,255,255,0.1)"/>
+<rect x="95" y="68" width="210" height="5" rx="2.5" fill="rgba(255,255,255,0.08)"/>
+<!-- awning -->
+<path d="M100 100 L300 100 L305 115 L95 115 Z" fill="rgba(255,255,255,0.12)"/>
+<path d="M100 100 L300 100" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+<path d="M130 100 L130 115 M160 100 L160 115 M190 100 L190 115 M220 100 L220 115 M250 100 L250 115 M280 100 L280 115" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<!-- door -->
+<rect x="170" y="155" width="60" height="115" rx="4" fill="rgba(255,255,255,0.08)"/>
+<rect x="170" y="155" width="60" height="6" rx="3" fill="rgba(255,255,255,0.06)"/>
+<circle cx="218" cy="215" r="3" fill="rgba(255,255,255,0.2)"/>
+<!-- windows -->
+<rect x="118" y="115" width="35" height="30" rx="3" fill="rgba(255,255,255,0.1)"/>
+<rect x="118" y="115" width="35" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+<line x1="135.5" y1="115" x2="135.5" y2="145" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="248" y="115" width="35" height="30" rx="3" fill="rgba(255,255,255,0.1)"/>
+<rect x="248" y="115" width="35" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+<line x1="265.5" y1="115" x2="265.5" y2="145" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<!-- sign -->
+<rect x="140" y="78" width="120" height="22" rx="11" fill="rgba(255,255,255,0.12)"/>
+<text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="sans-serif" font-size="12" font-weight="bold">♪ 音色商店</text>
+<!-- music notes on sign -->
+<text x="148" y="95" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="serif" font-size="14">♪</text>
+<text x="250" y="95" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="serif" font-size="14">♫</text>
+<!-- floating notes -->
+<g fill="rgba(255,255,255,0.25)" font-family="serif" font-size="18">
+  <text x="310" y="80" transform="rotate(12,310,80)">♪</text>
+  <text x="80" y="100" transform="rotate(-15,80,100)">♫</text>
+  <text x="330" y="170" transform="rotate(-8,330,170)">♪</text>
+  <text x="60" y="200" transform="rotate(20,60,200)">♫</text>
+</g>
+<!-- potted plant -->
+<rect x="118" y="202" width="20" height="25" rx="3" fill="rgba(255,255,255,0.08)"/>
+<path d="M128 202 Q128 190 118 188 Q128 186 128 180 Q128 186 138 188 Q128 190 128 202 Z" fill="rgba(255,255,255,0.1)"/>
+<!-- welcome mat -->
+<rect x="175" y="265" width="50" height="5" rx="2.5" fill="rgba(255,255,255,0.06)"/>
+<circle cx="340" cy="38" r="2.5" fill="rgba(255,255,255,0.35)"/>
+<circle cx="65" cy="38" r="2" fill="rgba(255,255,255,0.3)"/>
+</svg>

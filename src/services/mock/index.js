@@ -32,11 +32,18 @@ const initialMarketVoices = [
 ]
 
 const initialSynthesis = [
-  { id: 1, text: '大家好，欢迎来到今天的节目...', voice: '温柔女声', params: '语速1.0x 音量80% 音调0', status: 'success', date: '2026-07-05 14:30' },
-  { id: 2, text: '今天天气真好，我们一起去...', voice: '沉稳男声', params: '语速1.2x 音量90% 音调+2', status: 'success', date: '2026-07-05 10:15' },
-  { id: 3, text: '产品功能介绍：本产品采用...', voice: '知性女声', params: '语速0.8x 音量75% 音调-1', status: 'success', date: '2026-07-04 16:45' },
-  { id: 4, text: '温馨提示：请注意天气变化...', voice: '磁性大叔', params: '语速1.0x 音量85% 音调0', status: 'success', date: '2026-07-04 09:20' },
-  { id: 5, text: '这是一条测试文本，用于验证...', voice: '活泼少女', params: '语速1.5x 音量70% 音调+3', status: 'failed', date: '2026-07-03 11:00' },
+  { id: 1, text: '大家好，欢迎来到今天的节目...', voice: '温柔女声', params: '语速1.0x 音量80% 音调0', status: 'success', date: '2026-07-05 14:30', type: 'tts', audio_url: '' },
+  { id: 2, text: '今天天气真好，我们一起去...', voice: '沉稳男声', params: '语速1.2x 音量90% 音调+2', status: 'success', date: '2026-07-05 10:15', type: 'tts', audio_url: '' },
+  { id: 3, text: '产品功能介绍：本产品采用...', voice: '知性女声', params: '语速0.8x 音量75% 音调-1', status: 'success', date: '2026-07-04 16:45', type: 'tts', audio_url: '' },
+  { id: 4, text: '温馨提示：请注意天气变化...', voice: '磁性大叔', params: '语速1.0x 音量85% 音调0', status: 'success', date: '2026-07-04 09:20', type: 'tts', audio_url: '' },
+  { id: 5, text: '这是一条测试文本，用于验证...', voice: '活泼少女', params: '语速1.5x 音量70% 音调+3', status: 'failed', date: '2026-07-03 11:00', type: 'tts', audio_url: '' },
+]
+
+const initialScriptDubRecords = [
+  { id: 101, scriptName: '公司年度汇报配音', roleCount: 3, status: 'success', date: '2026-07-05 16:20', outputUrl: 'dub_101.mp3' },
+  { id: 102, scriptName: '产品宣传片配音', roleCount: 5, status: 'success', date: '2026-07-04 11:30', outputUrl: 'dub_102.mp3' },
+  { id: 103, scriptName: '培训课程配音', roleCount: 2, status: 'success', date: '2026-07-03 09:45', outputUrl: 'dub_103.mp3' },
+  { id: 104, scriptName: '有声小说第一章', roleCount: 6, status: 'failed', date: '2026-07-02 14:00', outputUrl: '' },
 ]
 
 const initialTTSVoiceOptions = [
@@ -54,11 +61,13 @@ const initialTTSVoiceOptions = [
 let voices = JSON.parse(JSON.stringify(initialVoices))
 let marketVoices = JSON.parse(JSON.stringify(initialMarketVoices))
 let synthesisRecords = JSON.parse(JSON.stringify(initialSynthesis))
+let scriptDubRecords = JSON.parse(JSON.stringify(initialScriptDubRecords))
 let ttsVoiceOptions = JSON.parse(JSON.stringify(initialTTSVoiceOptions))
 
 let voiceIdCounter = voices.length
 let marketIdCounter = marketVoices.length
 let synthesisIdCounter = synthesisRecords.length
+let scriptDubIdCounter = scriptDubRecords.length ? Math.max(...scriptDubRecords.map(r => r.id)) : 100
 
 // ---- 工具函数 ----
 
@@ -91,10 +100,12 @@ export function resetMockData() {
   voices = clone(initialVoices)
   marketVoices = clone(initialMarketVoices)
   synthesisRecords = clone(initialSynthesis)
+  scriptDubRecords = clone(initialScriptDubRecords)
   ttsVoiceOptions = clone(initialTTSVoiceOptions)
   voiceIdCounter = voices.length
   marketIdCounter = marketVoices.length
   synthesisIdCounter = synthesisRecords.length
+  scriptDubIdCounter = scriptDubRecords.length ? Math.max(...scriptDubRecords.map(r => r.id)) : 100
 }
 
 // ============================================================
@@ -307,17 +318,22 @@ export async function getSynthesisList(params = {}) {
  */
 export async function createSynthesis(data) {
   await delay()
+  const recordId = ++synthesisIdCounter
   const record = {
-    id: ++synthesisIdCounter,
+    id: recordId,
     text: data.text,
     voice: data.voice,
     params: data.params,
     status: data.status || 'success',
     model: data.model || 'edge-tts',
     date: now(),
+    type: 'tts',
+    audio_url: `tts/synthesis_${recordId}.mp3`,
+    record_id: recordId,
   }
   synthesisRecords.unshift(record)
-  return clone(record)
+  // 返回格式与真实API一致，包含 record_id 供 pollTask 使用
+  return { record_id: recordId, status: 1, audio_url: record.audio_url, text: data.text }
 }
 
 // ============================================================
@@ -357,8 +373,8 @@ export async function getDashboardStats() {
   await delay()
   return {
     voiceCount: voices.length,
-    synthesisCount: synthesisRecords.filter(r => r.status === 'success').length,
-    scriptCount: 8,
+    synthesisCount: synthesisRecords.filter(r => r.status === 'success' && r.type === 'tts').length,
+    scriptCount: scriptDubRecords.filter(r => r.status === 'success').length,
     downloadCount: voices.filter(v => v.source === 'shared').length,
   }
 }
@@ -367,8 +383,10 @@ let dubIdCounter = 100
 
 export async function createScriptDubTask(data) {
   await delay(2000)
+  const taskId = ++dubIdCounter
+  const recordId = ++scriptDubIdCounter
   const task = {
-    task_id: ++dubIdCounter,
+    task_id: taskId,
     script_name: data.script_name || '',
     script_text: data.script_text,
     role_count: (data.script_text.match(/^(.+?)[：:]/gm) || []).length,
@@ -376,17 +394,44 @@ export async function createScriptDubTask(data) {
     status: 0,
     created_at: new Date().toISOString(),
   }
+  // 同步创建脚本配音记录（记录ID与task_id关联）
+  const record = {
+    id: taskId,
+    scriptName: data.script_name || '未命名剧本',
+    roleCount: task.role_count,
+    status: 'success',
+    date: now(),
+    outputUrl: `dub_${taskId}.mp3`,
+  }
+  scriptDubRecords.unshift(record)
   return clone(task)
 }
 
 export async function getScriptDubList(params = {}) {
   await delay()
-  return { items: [], total: 0, page: 1, pageSize: 12 }
+  const { page = 1, pageSize = 12 } = params
+  const records = clone(scriptDubRecords)
+  const total = records.length
+  const start = (page - 1) * pageSize
+  const items = records.slice(start, start + pageSize)
+  return { items, total, page, pageSize }
 }
 
 export async function getScriptDubDetail(taskId) {
   await delay()
-  return { task_id: taskId, status: 1, output_url: '', role_count: 3, emotion_result: [], created_at: new Date().toISOString() }
+  const record = scriptDubRecords.find(r => r.id === taskId)
+  return {
+    task_id: taskId,
+    status: 1,
+    output_url: record?.outputUrl || `dub_${taskId}.mp3`,
+    role_count: record?.roleCount || 3,
+    emotion_result: [
+      { role: '角色A', emotion: 'joy' },
+      { role: '角色B', emotion: 'neutral' },
+      { role: '角色C', emotion: 'sad' },
+    ],
+    created_at: new Date().toISOString(),
+  }
 }
 
 export async function sendCode(phone) {
@@ -401,23 +446,90 @@ export async function login(phone, code) {
 
 export async function getTTSRecord(recordId) {
   await delay(200)
-  return { record_id: recordId, status: 1, audio_url: '', text: 'mock' }
+  const record = synthesisRecords.find(r => r.id === recordId || r.record_id === recordId)
+  if (record) {
+    return {
+      record_id: record.record_id || record.id,
+      status: record.status === 'success' ? 1 : record.status === 'failed' ? -1 : 0,
+      audio_url: record.audio_url || '',
+      text: record.text,
+    }
+  }
+  return { record_id: recordId, status: 1, audio_url: `tts/synthesis_${recordId}.mp3`, text: 'mock' }
 }
 
 export async function pollTask(taskId) {
   return getTTSRecord(taskId)
 }
 
-// ============================================================
-//  浏览历史 & 收藏 (mock)
-// ============================================================
+export async function downloadVoiceModel(voiceId) {
+  await delay(MOCK_DELAY)
+  console.log(`[Mock] Download voice model: ${voiceId}`)
+}
 
-export async function recordView() { await delay(); return {} }
-export async function getHistoryList(params = {}) { await delay(); return { items: [], total: 0, page: 1, pageSize: 20 } }
-export async function addFavorite() { await delay(); return {} }
-export async function removeFavorite() { await delay(); return {} }
-export async function getFavoriteList(params = {}) { await delay(); return { items: [], total: 0, page: 1, pageSize: 20 } }
-export async function checkFavorite() { await delay(); return false }
+export async function getCloneHistory(params = {}) {
+  await delay(MOCK_DELAY)
+  const cloned = voices.filter(v => v.source === 'cloned' && v.status === 'ready')
+  const ps = params.pageSize || 10
+  const p = params.page || 1
+  const start = (p - 1) * ps
+  const items = cloned.slice(start, start + ps).map(v => ({
+    ...clone(v),
+    historyId: v.id,
+    sample_url: v.sample_url || '',
+  }))
+  return { items, total: cloned.length, page: p, pageSize: ps }
+}
+
+export async function downloadCloneHistoryModel(historyId) {
+  await delay(MOCK_DELAY)
+  console.log(`[Mock] Download clone history model: ${historyId}`)
+  // 模拟浏览器下载（创建虚拟文件触发下载）
+  const a = document.createElement('a')
+  a.href = '#'
+  a.download = `voice_model_${historyId}.zip`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
+export async function addCloneHistoryToMyVoices(historyId) {
+  await delay(MOCK_DELAY)
+  // 从克隆历史中找到对应的记录
+  const cloned = voices.filter(v => v.source === 'cloned' && v.status === 'ready')
+  // 按 id 匹配克隆历史（使用 voices 中从 cloneHistory items 获取的信息）
+  // 在实际 mock 中，克隆历史直接映射到 voices 数组
+  const historyItem = cloned.find(v => v.id === historyId)
+  if (!historyItem) {
+    // fallback: 创建一个新的音色
+    const voice = {
+      id: ++voiceIdCounter,
+      name: `克隆音色_${historyId}`,
+      source: 'cloned',
+      status: 'ready',
+      mode: '深度克隆',
+      date: today(),
+      downloads: 0,
+    }
+    voices.unshift(voice)
+    return clone(voice)
+  }
+  // 检查是否已存在同名
+  const existing = voices.find(v => v.name === historyItem.name && v.status === 'ready')
+  if (existing) throw new Error('「我的音色」中已存在同名音色')
+  // 创建副本添加到我的音色
+  const voice = {
+    id: ++voiceIdCounter,
+    name: historyItem.name,
+    source: 'cloned',
+    status: 'ready',
+    mode: historyItem.mode || '深度克隆',
+    date: today(),
+    downloads: 0,
+  }
+  voices.unshift(voice)
+  return clone(voice)
+}
 
 // ============================================================
 //  常量映射

@@ -91,10 +91,13 @@ import StepIndicator from '@/components/StepIndicator.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import AiLoading from '@/components/AiLoading.vue'
 import { getTTSModels } from '@/services'
+import { incrementVoiceCount } from '@/services/statsCounter'
 import { useToast } from '@/composables/useToast'
+import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
 const { showToast } = useToast()
+const { requireAuth } = useAuth()
 
 const stepLabels = ['上传音频', '预处理', '克隆中', '完成']
 
@@ -131,7 +134,7 @@ onMounted(async () => {
       modelNotice.value = modelNotices[selectedModel.value] || ''
     }
   } catch (err) {
-    showToast('error', '加载模型列表失败：' + err.message)
+    if (!err.message?.includes('401')) showToast('error', '加载模型列表失败：' + err.message)
   }
 })
 
@@ -140,6 +143,7 @@ function onModelChange() {
 }
 
 function triggerUpload() {
+  if (!requireAuth(triggerUpload)) return
   fileInput.value?.click()
 }
 
@@ -150,6 +154,7 @@ function onFileSelect(e) {
 }
 
 async function startClone() {
+  if (!requireAuth(startClone)) return
   cloneFailed.value = false
   errorMessage.value = ''
   sampleUrl.value = ''
@@ -192,6 +197,7 @@ async function startClone() {
       if (voice.sample_url) {
         sampleUrl.value = '/audio/' + voice.sample_url
       }
+      incrementVoiceCount()
       setTimeout(() => {
         phase.value = 'result'
         showToast('success', '音色克隆成功！')
@@ -235,6 +241,7 @@ async function startClone() {
           if (v.sample_url) {
             sampleUrl.value = '/audio/' + v.sample_url
           }
+          incrementVoiceCount()
           setTimeout(() => {
             phase.value = 'result'
             showToast('success', '音色克隆成功！')
